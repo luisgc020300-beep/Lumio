@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// Lumio es una app personal -- todo cuelga de users/{uid}; nadie más que
+// el propio usuario lee o escribe sus electrodomésticos, progreso de
+// lecciones o sesiones de diagnóstico.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function esPropietario(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if esPropietario(uid);
+
+      match /electrodomesticos/{id} {
+        allow read, write: if esPropietario(uid);
+      }
+
+      match /progresoLecciones/{id} {
+        allow read, write: if esPropietario(uid);
+      }
+
+      match /diagnosticos/{id} {
+        allow read, write: if esPropietario(uid);
+
+        match /mensajes/{msgId} {
+          allow read, write: if esPropietario(uid);
+        }
+      }
+    }
+  }
+}

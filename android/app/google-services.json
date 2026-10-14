@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "455264213456",
+    "project_id": "lumio-sixapp",
+    "storage_bucket": "lumio-sixapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:455264213456:android:03c7b900a00dd1297e41d5",
+        "android_client_info": {
+          "package_name": "com.sixapp.lumio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-6k1swoUmnNxQSTNbsft63wDyuRxSh8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
