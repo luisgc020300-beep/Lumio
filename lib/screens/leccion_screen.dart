@@ -6,16 +6,17 @@ import '../services/leccion_service.dart';
 import '../theme/design_tokens.dart';
 
 class LeccionScreen extends StatefulWidget {
-  const LeccionScreen({required this.leccion, required this.progresoId, super.key});
+  const LeccionScreen({required this.leccion, required this.progresoId, this.pasoInicial = 0, super.key});
   final Leccion leccion;
   final String progresoId;
+  final int pasoInicial;
 
   @override
   State<LeccionScreen> createState() => _LeccionScreenState();
 }
 
 class _LeccionScreenState extends State<LeccionScreen> {
-  int _paso = 0;
+  late int _paso = widget.pasoInicial.clamp(0, widget.leccion.pasos.length - 1);
   bool _avanzando = false;
 
   bool get _esUltimo => _paso == widget.leccion.pasos.length - 1;
@@ -74,8 +75,20 @@ class _LeccionScreenState extends State<LeccionScreen> {
             child: ListView(
               padding: const EdgeInsets.all(LumioSpace.s5),
               children: [
-                Text(_etiquetaTipo(paso.tipo), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: context.colors.brand)),
-                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(color: context.colors.brand, shape: BoxShape.circle),
+                      alignment: Alignment.center,
+                      child: Text('${_paso + 1}', style: TextStyle(color: context.colors.brandOn, fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(_etiquetaTipo(paso.tipo), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: context.colors.brand)),
+                  ],
+                ),
+                const SizedBox(height: 10),
                 Text(paso.titulo, style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22)),
                 const SizedBox(height: LumioSpace.s4),
                 Text(paso.cuerpo, style: const TextStyle(fontSize: 15, height: 1.4)),

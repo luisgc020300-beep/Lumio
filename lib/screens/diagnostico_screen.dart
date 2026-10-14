@@ -82,9 +82,16 @@ class _DiagnosticoScreenState extends State<DiagnosticoScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.build_outlined, size: 48, color: context.colors.lavanda),
+          Center(
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(color: context.colors.lavanda.withValues(alpha: 0.18), shape: BoxShape.circle),
+              child: Icon(Icons.support_agent_outlined, size: 32, color: context.colors.lavanda),
+            ),
+          ),
           const SizedBox(height: LumioSpace.s4),
-          Text('Cuéntame qué ocurre', style: Theme.of(context).textTheme.titleMedium),
+          Text('Cuéntame qué ocurre', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: LumioSpace.s2),
           Text('Lo investigamos juntos, paso a paso.', style: TextStyle(color: context.colors.inkMuted)),
           const SizedBox(height: LumioSpace.s4),

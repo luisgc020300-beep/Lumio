@@ -16,55 +16,67 @@ class OnboardingScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SizedBox(height: LumioSpace.s4),
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(color: context.colors.brand, borderRadius: BorderRadius.circular(LumioRadius.sm)),
+                    child: Icon(Icons.home_outlined, color: context.colors.brandOn, size: 26),
+                  ),
+                  const SizedBox(width: LumioSpace.s3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Tu hogar, más fácil', style: Theme.of(context).textTheme.headlineSmall),
+                        Text(
+                          'Entiende · Usa · Resuelve · Aprende',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.brand, letterSpacing: 0.3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               const Spacer(),
-              Icon(Icons.lightbulb_outline, size: 56, color: context.colors.brand),
-              const SizedBox(height: LumioSpace.s5),
-              Text('Entiende los aparatos\nde tu hogar.', style: Theme.of(context).textTheme.displaySmall),
-              const SizedBox(height: LumioSpace.s3),
-              Text(
-                'Aprende a utilizarlos, descubre cómo funcionan y recibe ayuda cuando algo falla.',
-                style: TextStyle(color: context.colors.inkMuted, fontSize: 15),
+              Center(
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: BoxDecoration(color: context.colors.brandTint, shape: BoxShape.circle),
+                  child: Icon(Icons.kitchen_outlined, size: 108, color: context.colors.brand),
+                ),
               ),
               const SizedBox(height: LumioSpace.s8),
-              const _TarjetaCapacidad(icon: Icons.school_outlined, texto: 'Aprende cómo funcionan las cosas'),
+              Text('Tu hogar, más fácil', textAlign: TextAlign.center, style: Theme.of(context).textTheme.displaySmall),
               const SizedBox(height: LumioSpace.s3),
-              const _TarjetaCapacidad(icon: Icons.photo_camera_outlined, texto: 'Descubre cómo utilizarlas'),
-              const SizedBox(height: LumioSpace.s3),
-              const _TarjetaCapacidad(icon: Icons.build_outlined, texto: 'Resuelve problemas paso a paso'),
+              Text(
+                'Aprende a usar, entender y resolver con tus electrodomésticos.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: context.colors.inkMuted, fontSize: 15),
+              ),
               const Spacer(),
               FilledButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen(registroInicial: true))),
+                child: const Text('Crear cuenta'),
+              ),
+              const SizedBox(height: LumioSpace.s3),
+              OutlinedButton(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
-                child: const Text('Empezar'),
+                child: const Text('Iniciar sesión'),
+              ),
+              const SizedBox(height: LumioSpace.s4),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen())),
+                  child: Text('¿Tienes una cuenta? Inicia sesión', style: TextStyle(color: context.colors.inkMuted)),
+                ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _TarjetaCapacidad extends StatelessWidget {
-  const _TarjetaCapacidad({required this.icon, required this.texto});
-  final IconData icon;
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(LumioSpace.s4),
-      decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(LumioRadius.md), border: Border.all(color: context.colors.surfaceSunken)),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: context.colors.brandTint, borderRadius: BorderRadius.circular(LumioRadius.sm)),
-            child: Icon(icon, color: context.colors.brand, size: 20),
-          ),
-          const SizedBox(width: LumioSpace.s3),
-          Expanded(child: Text(texto, style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.ink))),
-        ],
       ),
     );
   }

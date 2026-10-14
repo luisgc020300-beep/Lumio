@@ -6,7 +6,8 @@ import 'package:flutter/services.dart';
 import '../theme/design_tokens.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({this.registroInicial = false, super.key});
+  final bool registroInicial;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -16,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  bool _esRegistro = false;
+  late bool _esRegistro = widget.registroInicial;
   bool _cargando = false;
   String? _error;
 
