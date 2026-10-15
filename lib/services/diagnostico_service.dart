@@ -28,6 +28,8 @@ class DiagnosticoService {
     return _sesiones.doc(sesionId).collection('mensajes').orderBy('createdAt').snapshots().map((s) => s.docs.map(MensajeDiagnostico.fromDoc).toList()).conRegistroDeErrores();
   }
 
+  /// Solo crea la sesión -- el primer mensaje lo escribe la llamada a
+  /// [enviarMensaje] que el screen hace justo después, para no duplicarlo.
   static Future<String> crearSesion(String sintoma, {String? electrodomesticoId}) async {
     final doc = await _sesiones.add({
       'sintoma': sintoma,
@@ -36,7 +38,6 @@ class DiagnosticoService {
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    await _sesiones.doc(doc.id).collection('mensajes').add({'rol': 'user', 'contenido': sintoma, 'createdAt': FieldValue.serverTimestamp()});
     return doc.id;
   }
 

@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
+const functionsV1 = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
@@ -231,4 +232,41 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
 
   const raw = toolUse.input;
   return { mode: 'real', content: raw.content, status: raw.status, safetyFlag: raw.safety_flag === true };
+});
+
+// =============================================================================
+// Limpieza de datos al eliminar una cuenta -- se dispara DESPUÉS de que
+// Firebase Auth ya ha borrado al usuario de verdad, así que puede usar
+// privilegios de administrador sin depender de que el cliente siga
+// autenticado (ver lib/services/cuenta_service.dart para el porqué del
+// orden: borrar Auth primero, limpiar datos después).
+// =============================================================================
+
+exports.limpiarDatosUsuario = functionsV1.auth.user().onDelete(async (user) => {
+  const uid = user.uid;
+  const db = admin.firestore();
+  const userRef = db.collection('users').doc(uid);
+
+  const electrodomesticos = await userRef.collection('electrodomesticos').get();
+  for (const doc of electrodomesticos.docs) {
+    const storagePath = doc.data().storagePath;
+    if (storagePath) {
+      try {
+        await admin.storage().bucket().file(storagePath).delete();
+      } catch (e) {
+        console.error(`limpiarDatosUsuario: no se pudo borrar ${storagePath}:`, e);
+      }
+    }
+  }
+
+  // Por si quedó algún objeto en Storage no referenciado en ningún
+  // documento (p. ej. una foto subida durante una identificación que
+  // nunca se llegó a guardar como electrodoméstico).
+  try {
+    await admin.storage().bucket().deleteFiles({ prefix: `users/${uid}/` });
+  } catch (e) {
+    console.error(`limpiarDatosUsuario: no se pudo limpiar el prefijo de Storage de ${uid}:`, e);
+  }
+
+  await db.recursiveDelete(userRef);
 });

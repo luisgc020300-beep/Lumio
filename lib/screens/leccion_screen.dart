@@ -22,18 +22,25 @@ class _LeccionScreenState extends State<LeccionScreen> {
   bool get _esUltimo => _paso == widget.leccion.pasos.length - 1;
 
   Future<void> _siguiente() async {
-    if (_esUltimo) {
-      setState(() => _avanzando = true);
-      await LeccionService.avanzarPaso(widget.progresoId, _paso, esUltimoPaso: true);
-      if (mounted) _mostrarResumen();
-      return;
+    setState(() => _avanzando = true);
+    try {
+      if (_esUltimo) {
+        await LeccionService.avanzarPaso(widget.progresoId, _paso, esUltimoPaso: true);
+        if (mounted) await _mostrarResumen();
+        return;
+      }
+      await LeccionService.avanzarPaso(widget.progresoId, _paso + 1, esUltimoPaso: false);
+      if (mounted) setState(() => _paso += 1);
+    } finally {
+      // Si "Terminar" ya cerró esta pantalla, el widget está desmontado --
+      // sin este chequeo, el botón se queda bloqueado para siempre si el
+      // usuario cierra la hoja deslizando en vez de pulsar el botón.
+      if (mounted) setState(() => _avanzando = false);
     }
-    await LeccionService.avanzarPaso(widget.progresoId, _paso + 1, esUltimoPaso: false);
-    setState(() => _paso += 1);
   }
 
-  void _mostrarResumen() {
-    showModalBottomSheet(
+  Future<void> _mostrarResumen() {
+    return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => Padding(

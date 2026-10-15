@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/leccion.dart';
+import '../services/cuenta_service.dart';
 import '../services/leccion_service.dart';
 import '../theme/design_tokens.dart';
 import '../theme/theme_controller.dart';
@@ -36,7 +37,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('¿Eliminar cuenta?'),
-        content: const Text('Esto elimina tu cuenta de acceso de forma permanente.'),
+        content: const Text('Esto elimina tu cuenta y todos tus datos (electrodomésticos, fotos, diagnósticos y progreso) de forma permanente.'),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
           FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
@@ -46,11 +47,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
     if (confirmar != true) return;
     setState(() => _eliminando = true);
     try {
-      await FirebaseAuth.instance.currentUser!.delete();
+      await CuentaService.eliminarCuentaYDatos();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         AppError.show(context, e.code == 'requires-recent-login' ? 'Por seguridad, vuelve a iniciar sesión y repite esta acción.' : 'No se ha podido eliminar la cuenta.', error: e);
       }
+    } catch (e) {
+      if (mounted) AppError.show(context, 'No se ha podido eliminar la cuenta.', error: e);
     } finally {
       if (mounted) setState(() => _eliminando = false);
     }
