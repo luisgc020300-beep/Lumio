@@ -242,7 +242,7 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
 // orden: borrar Auth primero, limpiar datos después).
 // =============================================================================
 
-exports.limpiarDatosUsuario = functionsV1.auth.user().onDelete(async (user) => {
+exports.limpiarDatosUsuario = functionsV1.region(REGION).auth.user().onDelete(async (user) => {
   const uid = user.uid;
   const db = admin.firestore();
   const userRef = db.collection('users').doc(uid);
