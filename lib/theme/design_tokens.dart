@@ -51,46 +51,46 @@ class LumioColors extends ThemeExtension<LumioColors> {
   final Color overlay;
 
   static const light = LumioColors(
-    background: Color(0xFFF4F5F9),
+    background: Color(0xFFF7F3EC),
     surface: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFECEEF5),
-    surfaceSunken: Color(0xFFE2E6EF),
-    ink: Color(0xFF26365B),
-    inkMuted: Color(0xFF64748B),
-    inkFaint: Color(0xFF97A1B5),
-    brand: Color(0xFF5268D9),
-    brandStrong: Color(0xFF3B4FBF),
+    surfaceMuted: Color(0xFFEFE8D8),
+    surfaceSunken: Color(0xFFE2D9C4),
+    ink: Color(0xFF16302C),
+    inkMuted: Color(0xFF5C6E69),
+    inkFaint: Color(0xFF8FA19C),
+    brand: Color(0xFF0F8679),
+    brandStrong: Color(0xFF0B655B),
     brandOn: Color(0xFFFFFFFF),
-    brandTint: Color(0x24A99AE8),
-    lavanda: Color(0xFFA99AE8),
-    accentCyan: Color(0xFF3FA7C9),
-    success: Color(0xFF23856D),
-    warning: Color(0xFFE5A23B),
-    warningText: Color(0xFF8A5A1F),
-    error: Color(0xFFD96565),
-    errorText: Color(0xFFB23D3D),
-    overlay: Color(0x26131A2B),
+    brandTint: Color(0x260F8679),
+    lavanda: Color(0xFF7FAE9E),
+    accentCyan: Color(0xFF3E98B8),
+    success: Color(0xFF3C9456),
+    warning: Color(0xFFD99A3E),
+    warningText: Color(0xFF7A5220),
+    error: Color(0xFFC75C52),
+    errorText: Color(0xFF9C3E36),
+    overlay: Color(0x26142420),
   );
 
   static const dark = LumioColors(
-    background: Color(0xFF0F1422),
-    surface: Color(0xFF1A2235),
-    surfaceMuted: Color(0xFF212B42),
-    surfaceSunken: Color(0xFF2A3550),
-    ink: Color(0xFFEEF1FA),
-    inkMuted: Color(0xFF9AA6C0),
-    inkFaint: Color(0xFF6E7996),
-    brand: Color(0xFF7C8CEF),
-    brandStrong: Color(0xFF99A6F5),
-    brandOn: Color(0xFF10142A),
-    brandTint: Color(0x33A99AE8),
-    lavanda: Color(0xFFBFB2F0),
-    accentCyan: Color(0xFF6FC4E0),
-    success: Color(0xFF4FB996),
-    warning: Color(0xFFF0B860),
-    warningText: Color(0xFFF3C88A),
-    error: Color(0xFFE08A8A),
-    errorText: Color(0xFFF2A7A7),
+    background: Color(0xFF0D1917),
+    surface: Color(0xFF15221F),
+    surfaceMuted: Color(0xFF1C2B27),
+    surfaceSunken: Color(0xFF24362F),
+    ink: Color(0xFFE9F2EE),
+    inkMuted: Color(0xFF9FB3AC),
+    inkFaint: Color(0xFF6C7F78),
+    brand: Color(0xFF4BC2B2),
+    brandStrong: Color(0xFF6ED4C6),
+    brandOn: Color(0xFF08201C),
+    brandTint: Color(0x334BC2B2),
+    lavanda: Color(0xFFA7D2C3),
+    accentCyan: Color(0xFF72C8E3),
+    success: Color(0xFF5FC27D),
+    warning: Color(0xFFEFB95E),
+    warningText: Color(0xFFF3CB8E),
+    error: Color(0xFFDE8B82),
+    errorText: Color(0xFFF0ACA4),
     overlay: Color(0x59000000),
   );
 
@@ -136,8 +136,8 @@ class LumioRadius {
   LumioRadius._();
   static const double xs = 6;
   static const double sm = 10;
-  static const double md = 14;
-  static const double lg = 24;
+  static const double md = 16;
+  static const double lg = 28;
   static const double pill = 999;
 }
 
@@ -175,7 +175,7 @@ class LumioText {
           color: palette.ink,
           fontSize: size,
           height: height / size,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
         );
     return sistema.copyWith(
@@ -221,7 +221,7 @@ ThemeData _buildLumioTheme(Brightness brightness) {
         fontFamily: LumioText.fontFamily,
         color: palette.ink,
         fontSize: 22,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
       ),
     ),
