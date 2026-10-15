@@ -176,6 +176,15 @@ const TROUBLESHOOT_TOOL = {
       content: { type: 'string', description: 'Respuesta en español: una pregunta concreta, un aviso de seguridad, o causas posibles con evidencia.' },
       status: { type: 'string', enum: ['investigando', 'resuelto', 'necesitaMasInfo', 'escaladoProfesional', 'noUsarHastaRevisar'] },
       safety_flag: { type: 'boolean', description: 'true si este turno incluye un aviso de seguridad relevante (riesgo eléctrico, gas, humo, etc.).' },
+      symptom_summary: {
+        type: 'string',
+        description:
+          'SOLO cuando status es "resuelto" o "escaladoProfesional": resumen genérico y corto del síntoma (p. ej. "no desagua", "hace ruido al centrifugar"). Nunca incluyas nombres, edades ni ningún detalle personal del usuario o de su hogar -- se usa de forma anónima y agregada para mejorar el servicio.',
+      },
+      probable_cause: {
+        type: 'string',
+        description: 'SOLO cuando status es "resuelto": causa probable en 2-6 palabras (p. ej. "filtro de desagüe obstruido"). Mismo criterio de anonimato que symptom_summary. Omite si no aplica.',
+      },
     },
     required: ['content', 'status', 'safety_flag'],
   },
@@ -196,6 +205,9 @@ Reglas estrictas:
   qué falta por saber -- nunca des un porcentaje de confianza inventado.
 - Si la información sigue siendo insuficiente, dilo honestamente (status="necesitaMasInfo").
 - Si el usuario confirma que el problema se ha resuelto, usa status="resuelto".
+- Cuando status sea "resuelto" o "escaladoProfesional", rellena también symptom_summary (y probable_cause si
+  status="resuelto") -- genéricos y anónimos, nunca con nombres, edades u otros detalles personales; se usan de
+  forma agregada para mejorar el servicio, nunca ligados a este usuario.
 - Responde siempre en español, de forma breve y concreta.
 Responde solo llamando a la herramienta responder_diagnostico.`;
 
@@ -219,6 +231,41 @@ async function obtenerHistorialPrevio(uid, electrodomesticoId) {
     const estado = d.estado === 'resuelto' ? 'resuelto' : 'escalado a un profesional';
     return `- ${fecha}: "${d.sintoma}" (${estado})`;
   });
+}
+
+// Semilla del moat real: a diferencia del historial por electrodoméstico
+// (que vive bajo el propio usuario y solo le sirve a él), esto acumula
+// patrones de resolución agregados y anónimos entre TODOS los usuarios --
+// con escala, un competidor nuevo no puede tener el primer día lo que
+// Lumio habrá aprendido con el tiempo. Nunca incluye uid, electrodomesticoId
+// ni texto verbatim del usuario -- solo lo que la propia IA ya generó de
+// forma genérica en symptom_summary/probable_cause. Nunca debe poder
+// romper la respuesta al usuario si falla.
+async function registrarAprendizajeAgregado(uid, electrodomesticoId, raw) {
+  if (!raw.symptom_summary) return;
+  if (raw.status !== 'resuelto' && raw.status !== 'escaladoProfesional') return;
+  try {
+    let categoria = null;
+    let fabricante = null;
+    if (typeof electrodomesticoId === 'string' && electrodomesticoId) {
+      const doc = await admin.firestore().collection('users').doc(uid).collection('electrodomesticos').doc(electrodomesticoId).get();
+      if (doc.exists) {
+        categoria = doc.data().categoria || null;
+        fabricante = doc.data().fabricante || null;
+      }
+    }
+    await admin.firestore().collection('aprendizajeAgregado').add({
+      categoria,
+      fabricante,
+      sintomaResumen: raw.symptom_summary,
+      causaProbable: raw.status === 'resuelto' ? raw.probable_cause || null : null,
+      estadoFinal: raw.status,
+      tuvoAvisoSeguridad: raw.safety_flag === true,
+      mes: new Date().toISOString().slice(0, 7),
+    });
+  } catch (e) {
+    console.error('registrarAprendizajeAgregado: no se pudo escribir:', e);
+  }
 }
 
 function demoRespuestaDiagnostico(messages) {
@@ -290,6 +337,7 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
   if (!toolUse) throw new HttpsError('internal', 'El modelo no devolvió una respuesta estructurada.');
 
   const raw = toolUse.input;
+  await registrarAprendizajeAgregado(request.auth.uid, electrodomesticoId, raw);
   return { mode: 'real', content: raw.content, status: raw.status, safetyFlag: raw.safety_flag === true, tuvoHistorialPrevio: historialPrevio.length > 0 };
 });
 

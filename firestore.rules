@@ -10,6 +10,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // No hay ningún bloque `match` para `aprendizajeAgregado/` ni para
+    // `users/{uid}/uso/{fecha}` a propósito -- con el modelo deny-by-default
+    // de Firestore, la ausencia de reglas ya las deja inaccesibles para
+    // cualquier cliente. Ambas solo las escribe la Cloud Function (Admin
+    // SDK, functions/index.js): la primera es el dataset anónimo y
+    // agregado de patrones de resolución (nunca uid/electrodomesticoId/
+    // texto verbatim del usuario); la segunda, la cuota diaria de uso de
+    // IA por usuario. Si en el futuro hace falta exponer alguna a algún
+    // cliente, añadir las reglas explícitamente aquí -- no es un olvido.
+
     function esPropietario(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
