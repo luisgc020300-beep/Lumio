@@ -1,4 +1,4 @@
-// lib/screens/perfil_tab.dart
+// lib/screens/ajustes_screen.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -9,17 +9,27 @@ import '../theme/theme_controller.dart';
 import '../widgets/app_error.dart';
 import '../widgets/ios_list.dart';
 
-class PerfilTab extends StatefulWidget {
-  const PerfilTab({super.key});
+class AjustesScreen extends StatefulWidget {
+  const AjustesScreen({super.key});
 
   @override
-  State<PerfilTab> createState() => _PerfilTabState();
+  State<AjustesScreen> createState() => _AjustesScreenState();
 }
 
-class _PerfilTabState extends State<PerfilTab> {
+class _AjustesScreenState extends State<AjustesScreen> {
+  bool _cerrandoSesion = false;
   bool _eliminando = false;
 
-  Future<void> _cerrarSesion() => FirebaseAuth.instance.signOut();
+  Future<void> _cerrarSesion() async {
+    setState(() => _cerrandoSesion = true);
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      if (mounted) AppError.show(context, 'No se ha podido cerrar sesión.', error: e);
+    } finally {
+      if (mounted) setState(() => _cerrandoSesion = false);
+    }
+  }
 
   Future<void> _eliminarCuenta() async {
     final confirmar = await showDialog<bool>(
@@ -52,7 +62,7 @@ class _PerfilTabState extends State<PerfilTab> {
     final controller = ThemeController.instance;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
+      appBar: AppBar(title: const Text('Ajustes')),
       body: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
@@ -85,6 +95,7 @@ class _PerfilTabState extends State<PerfilTab> {
               ),
               IosSection(
                 header: 'Apariencia',
+                footer: 'Elige cómo se ve Lumio en este dispositivo.',
                 rows: [
                   IosRow(
                     icon: Icons.light_mode_outlined,
@@ -118,7 +129,13 @@ class _PerfilTabState extends State<PerfilTab> {
               IosSection(
                 header: 'Sesión',
                 rows: [
-                  IosRow(icon: Icons.logout, iconColor: context.colors.inkMuted, title: 'Cerrar sesión', onTap: _cerrarSesion, showChevron: false),
+                  IosRow(
+                    icon: Icons.logout,
+                    iconColor: context.colors.inkMuted,
+                    title: _cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar sesión',
+                    onTap: _cerrandoSesion ? null : _cerrarSesion,
+                    showChevron: false,
+                  ),
                   IosRow(
                     icon: Icons.delete_outline,
                     iconColor: context.colors.error,

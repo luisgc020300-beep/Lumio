@@ -10,6 +10,7 @@ import '../services/leccion_service.dart';
 import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
+import 'ajustes_screen.dart';
 import 'camara_screen.dart';
 import 'diagnostico_screen.dart';
 import 'electrodomestico_detail_screen.dart';
@@ -24,7 +25,15 @@ class HomeTab extends StatelessWidget {
     final nombre = email.contains('@') ? email.split('@').first : email;
 
     return Scaffold(
-      appBar: AppBar(title: Text(nombre.isEmpty ? '¿Qué quieres aprender hoy?' : 'Hola, $nombre')),
+      appBar: AppBar(
+        title: Text(nombre.isEmpty ? '¿Qué quieres aprender hoy?' : 'Hola, $nombre'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AjustesScreen())),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(LumioSpace.s4),
         children: [

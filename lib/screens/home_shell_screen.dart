@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'home_tab.dart';
 import 'mis_electrodomesticos_tab.dart';
 import 'explorar_tab.dart';
-import 'perfil_tab.dart';
 import 'camara_screen.dart';
 
 class HomeShellScreen extends StatefulWidget {
@@ -35,7 +34,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
       _KeepAlivePage(child: HomeTab()),
       _KeepAlivePage(child: MisElectrodomesticosTab()),
       _KeepAlivePage(child: ExplorarTab()),
-      _KeepAlivePage(child: PerfilTab()),
     ];
 
     return Scaffold(
@@ -57,7 +55,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Inicio'),
           BottomNavigationBarItem(icon: Icon(Icons.kitchen_outlined), activeIcon: Icon(Icons.kitchen), label: 'Mi hogar'),
           BottomNavigationBarItem(icon: Icon(Icons.explore_outlined), activeIcon: Icon(Icons.explore), label: 'Explorar'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );
