@@ -55,6 +55,7 @@ async function comprobarYRegistrarUso(uid, campo, limite) {
 const IDENTIFY_TOOL = {
   name: 'identificar_electrodomestico',
   description: 'Registra la identificación de un electrodoméstico a partir de su fotografía.',
+  strict: true,
   input_schema: {
     type: 'object',
     properties: {
@@ -67,6 +68,7 @@ const IDENTIFY_TOOL = {
       summary: { type: 'string', description: '1-2 frases en español describiendo lo identificado.' },
     },
     required: ['category', 'confidence', 'visible_controls', 'uncertainties', 'summary'],
+    additionalProperties: false,
   },
 };
 
@@ -79,7 +81,7 @@ Reglas estrictas:
 - "confidence" refleja tu seguridad en fabricante/modelo, no en la categoría general (que suele ser obvia).
 - Lista en "uncertainties" lo que no puedes saber con esta única foto (p. ej. "no se ve la etiqueta de modelo").
 - Responde siempre en español.
-Responde solo llamando a la herramienta identificar_electrodomestico.`;
+Responde SIEMPRE llamando a la herramienta identificar_electrodomestico -- nunca con texto libre.`;
 
 function demoIdentificacion() {
   return {
@@ -121,7 +123,7 @@ exports.identificarElectrodomestico = onCall({ region: REGION, secrets: [_anthro
         max_tokens: 1024,
         system: IDENTIFY_SYSTEM_PROMPT,
         tools: [IDENTIFY_TOOL],
-        tool_choice: { type: 'tool', name: 'identificar_electrodomestico' },
+        tool_choice: { type: 'auto' },
         messages: [
           {
             role: 'user',
@@ -170,6 +172,7 @@ exports.identificarElectrodomestico = onCall({ region: REGION, secrets: [_anthro
 const TROUBLESHOOT_TOOL = {
   name: 'responder_diagnostico',
   description: 'Registra el siguiente turno del asistente de diagnóstico.',
+  strict: true,
   input_schema: {
     type: 'object',
     properties: {
@@ -187,6 +190,7 @@ const TROUBLESHOOT_TOOL = {
       },
     },
     required: ['content', 'status', 'safety_flag'],
+    additionalProperties: false,
   },
 };
 
@@ -209,7 +213,7 @@ Reglas estrictas:
   status="resuelto") -- genéricos y anónimos, nunca con nombres, edades u otros detalles personales; se usan de
   forma agregada para mejorar el servicio, nunca ligados a este usuario.
 - Responde siempre en español, de forma breve y concreta.
-Responde solo llamando a la herramienta responder_diagnostico.`;
+Responde SIEMPRE llamando a la herramienta responder_diagnostico -- nunca con texto libre.`;
 
 // El diferenciador frente a abrir una conversación nueva en un chat de IA
 // genérico: Lumio recuerda lo que ya pasó con ESTE electrodoméstico
@@ -317,7 +321,7 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
         max_tokens: 1024,
         system: systemPrompt,
         tools: [TROUBLESHOOT_TOOL],
-        tool_choice: { type: 'tool', name: 'responder_diagnostico' },
+        tool_choice: { type: 'auto' },
         messages: messages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
       }),
     });
