@@ -19,6 +19,34 @@ function claveConfigurada(apiKey) {
 const CATEGORIAS = ['lavadora_secadora', 'lavavajillas', 'frigorifico_congelador', 'horno_placa', 'aire_acondicionado', 'pequeno_electrodomestico', 'otro'];
 
 // =============================================================================
+// Cuota diaria por usuario -- sin esto, una clave real de Anthropic
+// configurada no tiene ningún freno de gasto: un usuario (o un cliente
+// comprometido que llame a la función saltándose la app) podría generar
+// llamadas sin límite. Solo se aplica cuando hay clave real -- en modo
+// demo no hay coste real que proteger.
+// =============================================================================
+
+const LIMITE_IDENTIFICACIONES_DIARIO = 30;
+const LIMITE_MENSAJES_DIAGNOSTICO_DIARIO = 60;
+
+function fechaHoyUtc() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function comprobarYRegistrarUso(uid, campo, limite) {
+  const db = admin.firestore();
+  const ref = db.collection('users').doc(uid).collection('uso').doc(fechaHoyUtc());
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const actual = (snap.exists && snap.data()[campo]) || 0;
+    if (actual >= limite) {
+      throw new HttpsError('resource-exhausted', 'Has alcanzado el límite diario de uso de IA. Inténtalo de nuevo mañana.');
+    }
+    tx.set(ref, { [campo]: actual + 1 }, { merge: true });
+  });
+}
+
+// =============================================================================
 // Identificación de electrodomésticos -- nunca inventa fabricante/modelo:
 // solo los devuelve si hay evidencia visual suficiente (p. ej. una
 // etiqueta legible). Demo determinista si no hay clave de Anthropic.
@@ -76,6 +104,8 @@ exports.identificarElectrodomestico = onCall({ region: REGION, secrets: [_anthro
 
   const apiKey = _anthropicKey.value();
   if (!claveConfigurada(apiKey)) return demoIdentificacion();
+
+  await comprobarYRegistrarUso(request.auth.uid, 'identificaciones', LIMITE_IDENTIFICACIONES_DIARIO);
 
   const bucket = admin.storage().bucket();
   const [bytes] = await bucket.file(storagePath).download();
@@ -169,6 +199,28 @@ Reglas estrictas:
 - Responde siempre en español, de forma breve y concreta.
 Responde solo llamando a la herramienta responder_diagnostico.`;
 
+// El diferenciador frente a abrir una conversación nueva en un chat de IA
+// genérico: Lumio recuerda lo que ya pasó con ESTE electrodoméstico
+// concreto. Se consulta bajo el propio namespace del usuario autenticado
+// (nunca una ruta arbitraria pasada por el cliente), así que un
+// electrodomesticoId ajeno o inventado simplemente no encuentra nada --
+// no hay riesgo de fuga entre usuarios.
+async function obtenerHistorialPrevio(uid, electrodomesticoId) {
+  if (typeof electrodomesticoId !== 'string' || !electrodomesticoId) return [];
+  const db = admin.firestore();
+  const snap = await db.collection('users').doc(uid).collection('diagnosticos').where('electrodomesticoId', '==', electrodomesticoId).get();
+  const relevantes = snap.docs
+    .map((d) => d.data())
+    .filter((d) => d.estado === 'resuelto' || d.estado === 'escaladoProfesional')
+    .sort((a, b) => (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0))
+    .slice(0, 5);
+  return relevantes.map((d) => {
+    const fecha = d.updatedAt?.toDate?.() ? d.updatedAt.toDate().toISOString().slice(0, 10) : 'fecha desconocida';
+    const estado = d.estado === 'resuelto' ? 'resuelto' : 'escalado a un profesional';
+    return `- ${fecha}: "${d.sintoma}" (${estado})`;
+  });
+}
+
 function demoRespuestaDiagnostico(messages) {
   const turnos = messages.filter((m) => m.role === 'user').length;
   if (turnos <= 1) {
@@ -190,7 +242,7 @@ function demoRespuestaDiagnostico(messages) {
 exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Debes estar autenticado.');
 
-  const { messages } = request.data;
+  const { messages, electrodomesticoId } = request.data;
   if (!Array.isArray(messages) || messages.length === 0) {
     throw new HttpsError('invalid-argument', 'Falta el historial de la conversación.');
   }
@@ -201,6 +253,13 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
   const apiKey = _anthropicKey.value();
   if (!claveConfigurada(apiKey)) return demoRespuestaDiagnostico(messages);
 
+  await comprobarYRegistrarUso(request.auth.uid, 'mensajesDiagnostico', LIMITE_MENSAJES_DIAGNOSTICO_DIARIO);
+
+  const historialPrevio = await obtenerHistorialPrevio(request.auth.uid, electrodomesticoId);
+  const systemPrompt = historialPrevio.length
+    ? `${TROUBLESHOOT_SYSTEM_PROMPT}\n\nHistorial conocido de este electrodoméstico (solo como referencia -- no asumas que la causa actual es la misma sin evidencia nueva del usuario en esta conversación):\n${historialPrevio.join('\n')}`
+    : TROUBLESHOOT_SYSTEM_PROMPT;
+
   let res;
   try {
     res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -209,7 +268,7 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 1024,
-        system: TROUBLESHOOT_SYSTEM_PROMPT,
+        system: systemPrompt,
         tools: [TROUBLESHOOT_TOOL],
         tool_choice: { type: 'tool', name: 'responder_diagnostico' },
         messages: messages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
@@ -231,7 +290,7 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
   if (!toolUse) throw new HttpsError('internal', 'El modelo no devolvió una respuesta estructurada.');
 
   const raw = toolUse.input;
-  return { mode: 'real', content: raw.content, status: raw.status, safetyFlag: raw.safety_flag === true };
+  return { mode: 'real', content: raw.content, status: raw.status, safetyFlag: raw.safety_flag === true, tuvoHistorialPrevio: historialPrevio.length > 0 };
 });
 
 // =============================================================================

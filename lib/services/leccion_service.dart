@@ -1,8 +1,11 @@
 // lib/services/leccion_service.dart
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/leccion.dart';
+import 'analytics_service.dart';
 import 'stream_error_logging.dart';
 
 class LeccionService {
@@ -30,14 +33,20 @@ class LeccionService {
       'estado': EstadoProgresoLeccion.enCurso.name,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    unawaited(AnalyticsService.leccionIniciada(leccionId: leccionId));
     return doc.id;
   }
 
-  static Future<void> avanzarPaso(String progresoId, int nuevoPaso, {required bool esUltimoPaso}) {
-    return _col.doc(progresoId).update({
+  static Future<void> avanzarPaso(String progresoId, int nuevoPaso, {required bool esUltimoPaso}) async {
+    await _col.doc(progresoId).update({
       'pasoActual': nuevoPaso,
       if (esUltimoPaso) 'estado': EstadoProgresoLeccion.completada.name,
       if (esUltimoPaso) 'completedAt': FieldValue.serverTimestamp(),
     });
+    if (esUltimoPaso) {
+      final doc = await _col.doc(progresoId).get();
+      final leccionId = doc.data()?['leccionId'] as String?;
+      if (leccionId != null) unawaited(AnalyticsService.leccionCompletada(leccionId: leccionId));
+    }
   }
 }

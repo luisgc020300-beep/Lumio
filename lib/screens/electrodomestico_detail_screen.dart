@@ -88,8 +88,57 @@ class _TabResumen extends StatelessWidget {
   const _TabResumen({required this.e});
   final Electrodomestico e;
 
+  Future<void> _editarGarantia(BuildContext context) async {
+    DateTime? fecha = e.fechaCompra;
+    int? meses = e.garantiaMeses;
+    final guardar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Fecha de compra y garantía'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.event_outlined),
+                title: Text(fecha == null ? 'Elegir fecha de compra' : 'Comprado el ${fecha!.day}/${fecha!.month}/${fecha!.year}'),
+                onTap: () async {
+                  final elegida = await showDatePicker(
+                    context: dialogContext,
+                    initialDate: fecha ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime.now(),
+                  );
+                  if (elegida != null) setDialogState(() => fecha = elegida);
+                },
+              ),
+              const SizedBox(height: LumioSpace.s2),
+              Text('Duración de la garantía', style: Theme.of(dialogContext).textTheme.bodySmall),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                children: [12, 24, 36].map((m) {
+                  return ChoiceChip(label: Text('$m meses'), selected: meses == m, onSelected: (_) => setDialogState(() => meses = m));
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancelar')),
+            FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Guardar')),
+          ],
+        ),
+      ),
+    );
+    if (guardar == true) await ElectrodomesticoService.actualizarGarantia(e.id, fechaCompra: fecha, garantiaMeses: meses);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final garantiaHasta = e.garantiaHasta;
+    final diasHastaGarantia = garantiaHasta?.difference(DateTime.now()).inDays;
     return ListView(
       padding: const EdgeInsets.all(LumioSpace.s4),
       children: [
@@ -129,6 +178,22 @@ class _TabResumen extends StatelessWidget {
             ]),
           ),
         ],
+        const SizedBox(height: LumioSpace.s5),
+        Text('Garantía', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 6),
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.verified_outlined, color: context.colors.brand),
+            title: Text(
+              garantiaHasta == null
+                  ? 'Sin fecha de compra registrada'
+                  : (diasHastaGarantia! < 0 ? 'Garantía caducada el ${garantiaHasta.day}/${garantiaHasta.month}/${garantiaHasta.year}' : 'Garantía hasta el ${garantiaHasta.day}/${garantiaHasta.month}/${garantiaHasta.year}'),
+            ),
+            subtitle: garantiaHasta != null && diasHastaGarantia! >= 0 ? Text('Quedan $diasHastaGarantia días') : null,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _editarGarantia(context),
+          ),
+        ),
       ],
     );
   }

@@ -39,7 +39,7 @@ class _DiagnosticoScreenState extends State<DiagnosticoScreen> {
     setState(() => _enviando = true);
     try {
       final id = await DiagnosticoService.crearSesion(sintoma.trim(), electrodomesticoId: widget.electrodomesticoId);
-      await DiagnosticoService.enviarMensaje(id, sintoma.trim()); // dispara el primer turno del asistente
+      await DiagnosticoService.enviarMensaje(id, sintoma.trim(), electrodomesticoId: widget.electrodomesticoId); // dispara el primer turno del asistente
       if (mounted) {
         setState(() {
           _sesionId = id;
@@ -59,7 +59,7 @@ class _DiagnosticoScreenState extends State<DiagnosticoScreen> {
     setState(() => _enviando = true);
     _inputCtrl.clear();
     try {
-      await DiagnosticoService.enviarMensaje(_sesionId!, texto);
+      await DiagnosticoService.enviarMensaje(_sesionId!, texto, electrodomesticoId: widget.electrodomesticoId);
     } catch (e) {
       if (mounted) AppError.show(context, 'No se ha podido enviar.', error: e);
     } finally {
@@ -94,6 +94,10 @@ class _DiagnosticoScreenState extends State<DiagnosticoScreen> {
           Text('Cuéntame qué ocurre', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: LumioSpace.s2),
           Text('Lo investigamos juntos, paso a paso.', style: TextStyle(color: context.colors.inkMuted)),
+          if (widget.electrodomesticoId != null) ...[
+            const SizedBox(height: LumioSpace.s4),
+            _IncidenciasPrevias(electrodomesticoId: widget.electrodomesticoId!),
+          ],
           const SizedBox(height: LumioSpace.s4),
           TextField(
             controller: _inputCtrl,
@@ -144,6 +148,47 @@ class _DiagnosticoScreenState extends State<DiagnosticoScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// El motivo concreto por el que Lumio no es "abrir una conversación
+/// nueva en ChatGPT": recuerda lo que ya pasó con ESTE electrodoméstico.
+/// Solo se muestra cuando hay algo real que mostrar -- nada si es la
+/// primera vez.
+class _IncidenciasPrevias extends StatelessWidget {
+  const _IncidenciasPrevias({required this.electrodomesticoId});
+  final String electrodomesticoId;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<SesionDiagnostico>>(
+      stream: DiagnosticoService.streamSesiones(),
+      builder: (context, snapshot) {
+        final previas = (snapshot.data ?? [])
+            .where((s) => s.electrodomesticoId == electrodomesticoId && (s.estado == EstadoDiagnostico.resuelto || s.estado == EstadoDiagnostico.escaladoProfesional))
+            .toList();
+        if (previas.isEmpty) return const SizedBox.shrink();
+        return Container(
+          padding: const EdgeInsets.all(LumioSpace.s3),
+          decoration: BoxDecoration(color: context.colors.brandTint, borderRadius: BorderRadius.circular(LumioRadius.sm)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.history, size: 18, color: context.colors.brand),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  previas.length == 1
+                      ? 'Tengo en cuenta 1 incidencia anterior con este aparato.'
+                      : 'Tengo en cuenta ${previas.length} incidencias anteriores con este aparato.',
+                  style: TextStyle(fontSize: 13, color: context.colors.ink),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

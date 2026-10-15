@@ -2,7 +2,11 @@ rules_version = '2';
 
 // Lumio es una app personal -- todo cuelga de users/{uid}; nadie más que
 // el propio usuario lee o escribe sus electrodomésticos, progreso de
-// lecciones o sesiones de diagnóstico.
+// lecciones o sesiones de diagnóstico. Además de la propiedad, cada
+// colección valida esquema (claves permitidas, tipos) para que un
+// cliente comprometido no pueda forjar campos como el estado de
+// identificación sin pasar por la Cloud Function, ni colar campos
+// arbitrarios o documentos desproporcionadamente grandes.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -10,22 +14,113 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    function esTimestampDelServidor(campo) {
+      return request.resource.data[campo] == request.time;
+    }
+
+    function soloCambia(claves) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(claves);
+    }
+
+    function textoOpcional(campo, maxLen) {
+      return !(campo in request.resource.data) || request.resource.data[campo] == null || (request.resource.data[campo] is string && request.resource.data[campo].size() <= maxLen);
+    }
+
+    function numeroOpcional(campo) {
+      return !(campo in request.resource.data) || request.resource.data[campo] == null || request.resource.data[campo] is number;
+    }
+
+    function boolOpcional(campo) {
+      return !(campo in request.resource.data) || request.resource.data[campo] is bool;
+    }
+
+    function enteroOpcional(campo) {
+      return !(campo in request.resource.data) || request.resource.data[campo] == null || request.resource.data[campo] is int;
+    }
+
+    function timestampOpcional(campo) {
+      return !(campo in request.resource.data) || request.resource.data[campo] == null || request.resource.data[campo] is timestamp;
+    }
+
     match /users/{uid} {
-      allow read, write: if esPropietario(uid);
+      allow read: if esPropietario(uid);
 
       match /electrodomesticos/{id} {
-        allow read, write: if esPropietario(uid);
+        allow read: if esPropietario(uid);
+
+        allow create: if esPropietario(uid)
+          && request.resource.data.keys().hasOnly(['nombre', 'categoria', 'fabricante', 'modelo', 'estadoIdentificacion', 'confianzaIdentificacion', 'fotoUrl', 'controlesVisibles', 'incertidumbres', 'storagePath', 'fechaCompra', 'garantiaMeses', 'createdAt', 'updatedAt'])
+          && request.resource.data.nombre is string && request.resource.data.nombre.size() > 0 && request.resource.data.nombre.size() <= 200
+          && request.resource.data.categoria is string
+          && request.resource.data.estadoIdentificacion is string
+          && request.resource.data.controlesVisibles is list
+          && request.resource.data.incertidumbres is list
+          && request.resource.data.storagePath is string
+          && textoOpcional('fabricante', 200)
+          && textoOpcional('modelo', 200)
+          && textoOpcional('fotoUrl', 2000)
+          && numeroOpcional('confianzaIdentificacion')
+          && timestampOpcional('fechaCompra')
+          && enteroOpcional('garantiaMeses')
+          && esTimestampDelServidor('createdAt')
+          && esTimestampDelServidor('updatedAt');
+
+        allow update: if esPropietario(uid) && (
+          (soloCambia(['nombre', 'updatedAt'])
+            && request.resource.data.nombre is string && request.resource.data.nombre.size() > 0 && request.resource.data.nombre.size() <= 200
+            && esTimestampDelServidor('updatedAt'))
+          ||
+          (soloCambia(['fechaCompra', 'garantiaMeses', 'updatedAt'])
+            && timestampOpcional('fechaCompra')
+            && enteroOpcional('garantiaMeses')
+            && esTimestampDelServidor('updatedAt'))
+        );
+
+        allow delete: if esPropietario(uid);
       }
 
       match /progresoLecciones/{id} {
-        allow read, write: if esPropietario(uid);
+        allow read: if esPropietario(uid);
+
+        allow create: if esPropietario(uid)
+          && request.resource.data.keys().hasOnly(['leccionId', 'electrodomesticoId', 'pasoActual', 'estado', 'createdAt'])
+          && request.resource.data.leccionId is string
+          && request.resource.data.pasoActual is int && request.resource.data.pasoActual >= 0
+          && request.resource.data.estado is string
+          && textoOpcional('electrodomesticoId', 200)
+          && esTimestampDelServidor('createdAt');
+
+        allow update: if esPropietario(uid)
+          && soloCambia(['pasoActual', 'estado', 'completedAt'])
+          && request.resource.data.pasoActual is int && request.resource.data.pasoActual >= 0
+          && request.resource.data.estado is string;
       }
 
       match /diagnosticos/{id} {
-        allow read, write: if esPropietario(uid);
+        allow read: if esPropietario(uid);
+
+        allow create: if esPropietario(uid)
+          && request.resource.data.keys().hasOnly(['sintoma', 'electrodomesticoId', 'estado', 'createdAt', 'updatedAt'])
+          && request.resource.data.sintoma is string && request.resource.data.sintoma.size() <= 2000
+          && request.resource.data.estado is string
+          && textoOpcional('electrodomesticoId', 200)
+          && esTimestampDelServidor('createdAt')
+          && esTimestampDelServidor('updatedAt');
+
+        allow update: if esPropietario(uid)
+          && soloCambia(['estado', 'updatedAt'])
+          && request.resource.data.estado is string
+          && esTimestampDelServidor('updatedAt');
 
         match /mensajes/{msgId} {
-          allow read, write: if esPropietario(uid);
+          allow read: if esPropietario(uid);
+
+          allow create: if esPropietario(uid)
+            && request.resource.data.keys().hasOnly(['rol', 'contenido', 'esAvisoSeguridad', 'createdAt'])
+            && request.resource.data.rol in ['user', 'assistant']
+            && request.resource.data.contenido is string && request.resource.data.contenido.size() <= 4000
+            && boolOpcional('esAvisoSeguridad')
+            && esTimestampDelServidor('createdAt');
         }
       }
     }

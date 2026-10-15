@@ -67,6 +67,8 @@ class Electrodomestico {
     this.fotoUrl,
     this.controlesVisibles = const [],
     this.incertidumbres = const [],
+    this.fechaCompra,
+    this.garantiaMeses,
     this.createdAt,
     this.updatedAt,
   });
@@ -81,10 +83,23 @@ class Electrodomestico {
   final String? fotoUrl;
   final List<String> controlesVisibles;
   final List<String> incertidumbres;
+  /// Introducida por el usuario -- nunca inferida de la foto ni asumida.
+  final DateTime? fechaCompra;
+  /// Introducida por el usuario -- nunca inferida. Solo con [fechaCompra]
+  /// se puede calcular [garantiaHasta]; si falta cualquiera de los dos,
+  /// no se inventa una fecha de garantía.
+  final int? garantiaMeses;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get modeloVerificado => estadoIdentificacion == EstadoIdentificacion.identificadoConModelo;
+
+  DateTime? get garantiaHasta {
+    final compra = fechaCompra;
+    final meses = garantiaMeses;
+    if (compra == null || meses == null) return null;
+    return DateTime(compra.year, compra.month + meses, compra.day);
+  }
 
   factory Electrodomestico.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -99,6 +114,8 @@ class Electrodomestico {
       fotoUrl: data['fotoUrl'] as String?,
       controlesVisibles: ((data['controlesVisibles'] as List?) ?? []).map((e) => e as String).toList(),
       incertidumbres: ((data['incertidumbres'] as List?) ?? []).map((e) => e as String).toList(),
+      fechaCompra: (data['fechaCompra'] as Timestamp?)?.toDate(),
+      garantiaMeses: (data['garantiaMeses'] as num?)?.toInt(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -114,5 +131,7 @@ class Electrodomestico {
         if (fotoUrl != null) 'fotoUrl': fotoUrl,
         'controlesVisibles': controlesVisibles,
         'incertidumbres': incertidumbres,
+        if (fechaCompra != null) 'fechaCompra': Timestamp.fromDate(fechaCompra!),
+        if (garantiaMeses != null) 'garantiaMeses': garantiaMeses,
       };
 }

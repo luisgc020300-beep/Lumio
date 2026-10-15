@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../data/catalogo_lecciones.dart';
 import '../models/electrodomestico.dart';
 import '../models/leccion.dart';
+import '../services/analytics_service.dart';
 import '../services/electrodomestico_service.dart';
 import '../services/leccion_service.dart';
 import '../theme/categoria_estilos.dart';
@@ -53,6 +54,7 @@ class HomeTab extends StatelessWidget {
             tono: context.colors.lavanda,
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DiagnosticoScreen())),
           ),
+          const _BannerGarantias(),
           const SizedBox(height: LumioSpace.s6),
           Text('Tus electrodomésticos', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: LumioSpace.s2),
@@ -91,6 +93,73 @@ class HomeTab extends StatelessWidget {
     );
   }
 
+}
+
+/// Motivo real para volver a abrir la app sin forzar un hábito diario
+/// falso: avisa cuando la garantía de un electrodoméstico está a punto
+/// de caducar. Solo se basa en datos que el propio usuario introdujo
+/// (fecha de compra + duración) -- nunca se inventa ni se asume.
+class _BannerGarantias extends StatefulWidget {
+  const _BannerGarantias();
+
+  @override
+  State<_BannerGarantias> createState() => _BannerGarantiasState();
+}
+
+class _BannerGarantiasState extends State<_BannerGarantias> {
+  bool _reportado = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Electrodomestico>>(
+      stream: ElectrodomesticoService.streamElectrodomesticos(),
+      builder: (context, snapshot) {
+        final ahora = DateTime.now();
+        final proximas = (snapshot.data ?? []).where((e) {
+          final hasta = e.garantiaHasta;
+          if (hasta == null) return false;
+          final dias = hasta.difference(ahora).inDays;
+          return dias >= 0 && dias <= 30;
+        }).toList();
+        if (proximas.isEmpty) return const SizedBox.shrink();
+        if (!_reportado) {
+          _reportado = true;
+          AnalyticsService.garantiaBannerMostrado();
+        }
+        final e = proximas.first;
+        final dias = e.garantiaHasta!.difference(ahora).inDays;
+        return Padding(
+          padding: const EdgeInsets.only(top: LumioSpace.s4),
+          child: Material(
+            color: context.colors.warning.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(LumioRadius.sm),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(LumioRadius.sm),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ElectrodomesticoDetailScreen(id: e.id))),
+              child: Padding(
+                padding: const EdgeInsets.all(LumioSpace.s3),
+                child: Row(
+                  children: [
+                    Icon(Icons.verified_outlined, size: 20, color: context.colors.warningText),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        proximas.length == 1
+                            ? 'La garantía de "${e.nombre}" caduca en $dias días.'
+                            : 'La garantía de "${e.nombre}" y ${proximas.length - 1} más caduca pronto.',
+                        style: TextStyle(color: context.colors.warningText, fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: context.colors.warningText, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _TarjetaPrincipal extends StatelessWidget {

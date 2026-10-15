@@ -1,9 +1,12 @@
 // lib/services/diagnostico_service.dart
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/diagnostico.dart';
+import 'analytics_service.dart';
 import 'stream_error_logging.dart';
 
 class RespuestaDiagnostico {
@@ -38,17 +41,18 @@ class DiagnosticoService {
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    unawaited(AnalyticsService.diagnosticoIniciado(tieneElectrodomestico: electrodomesticoId != null));
     return doc.id;
   }
 
-  static Future<void> enviarMensaje(String sesionId, String mensaje) async {
+  static Future<void> enviarMensaje(String sesionId, String mensaje, {String? electrodomesticoId}) async {
     await _sesiones.doc(sesionId).collection('mensajes').add({'rol': 'user', 'contenido': mensaje, 'createdAt': FieldValue.serverTimestamp()});
 
     final historial = await _sesiones.doc(sesionId).collection('mensajes').orderBy('createdAt').get();
     final mensajes = historial.docs.map((d) => {'role': d.data()['rol'], 'content': d.data()['contenido']}).toList();
 
     final callable = FirebaseFunctions.instanceFor(region: _region).httpsCallable('investigarProblema');
-    final result = await callable.call({'messages': mensajes});
+    final result = await callable.call({'messages': mensajes, 'electrodomesticoId': ?electrodomesticoId});
     final data = Map<String, dynamic>.from(result.data as Map);
 
     await _sesiones.doc(sesionId).collection('mensajes').add({
@@ -62,5 +66,8 @@ class DiagnosticoService {
       'estado': EstadoDiagnostico.parse(data['status'] as String?).name,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    if (data['tuvoHistorialPrevio'] == true) unawaited(AnalyticsService.diagnosticoConHistorialPrevio());
+    if (data['safetyFlag'] == true) unawaited(AnalyticsService.avisoSeguridadMostrado());
   }
 }

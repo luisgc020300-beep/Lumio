@@ -1,12 +1,15 @@
 // lib/services/electrodomestico_service.dart
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../models/electrodomestico.dart';
+import 'analytics_service.dart';
 import 'stream_error_logging.dart';
 
 class IdentificacionResultado {
@@ -74,6 +77,9 @@ class ElectrodomesticoService {
 
   static Future<String> guardar({required String nombre, required IdentificacionResultado identificacion}) async {
     final fotoUrl = await FirebaseStorage.instance.ref(identificacion.storagePath).getDownloadURL();
+    final estadoIdentificacion = identificacion.modelo != null && (identificacion.confianza ?? 0) >= 0.6
+        ? EstadoIdentificacion.identificadoConModelo
+        : (identificacion.categoria != CategoriaElectrodomestico.otro ? EstadoIdentificacion.identificadoGeneral : EstadoIdentificacion.sinIdentificar);
     final doc = await _col.add({
       ...Electrodomestico(
         id: '',
@@ -81,9 +87,7 @@ class ElectrodomesticoService {
         categoria: identificacion.categoria,
         fabricante: identificacion.fabricante,
         modelo: identificacion.modelo,
-        estadoIdentificacion: identificacion.modelo != null && (identificacion.confianza ?? 0) >= 0.6
-            ? EstadoIdentificacion.identificadoConModelo
-            : (identificacion.categoria != CategoriaElectrodomestico.otro ? EstadoIdentificacion.identificadoGeneral : EstadoIdentificacion.sinIdentificar),
+        estadoIdentificacion: estadoIdentificacion,
         confianzaIdentificacion: identificacion.confianza,
         fotoUrl: fotoUrl,
         controlesVisibles: identificacion.controlesVisibles,
@@ -93,10 +97,21 @@ class ElectrodomesticoService {
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    unawaited(AnalyticsService.electrodomesticoGuardado(categoria: identificacion.categoria.valor, modeloVerificado: estadoIdentificacion == EstadoIdentificacion.identificadoConModelo));
     return doc.id;
   }
 
   static Future<void> renombrar(String id, String nuevoNombre) => _col.doc(id).update({'nombre': nuevoNombre, 'updatedAt': FieldValue.serverTimestamp()});
+
+  /// [fechaCompra]/[garantiaMeses] null borra ese dato -- nunca se infiere,
+  /// siempre la introduce el usuario a mano.
+  static Future<void> actualizarGarantia(String id, {DateTime? fechaCompra, int? garantiaMeses}) {
+    return _col.doc(id).update({
+      'fechaCompra': fechaCompra != null ? Timestamp.fromDate(fechaCompra) : FieldValue.delete(),
+      'garantiaMeses': garantiaMeses ?? FieldValue.delete(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 
   static Future<void> eliminar(String id) async {
     final doc = await _col.doc(id).get();
@@ -104,7 +119,9 @@ class ElectrodomesticoService {
     if (storagePath != null) {
       try {
         await FirebaseStorage.instance.ref(storagePath).delete();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('ElectrodomesticoService.eliminar: no se pudo borrar $storagePath: $e');
+      }
     }
     await _col.doc(id).delete();
   }
