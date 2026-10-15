@@ -211,9 +211,15 @@ class _CamaraScreenState extends State<CamaraScreen> {
                   ...r.incertidumbres.map((c) => Row(children: [Icon(Icons.help_outline, size: 16, color: context.colors.warningText), const SizedBox(width: 6), Expanded(child: Text(c))])),
                 ],
                 const SizedBox(height: LumioSpace.s6),
-                FilledButton(onPressed: _guardando ? null : () => _guardarYContinuar(irADiagnostico: false), child: Text(_guardando ? 'Guardando...' : 'Aprender sobre este aparato')),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(onPressed: _guardando ? null : () => _guardarYContinuar(irADiagnostico: false), child: Text(_guardando ? 'Guardando...' : 'Aprender sobre este aparato')),
+                ),
                 const SizedBox(height: LumioSpace.s2),
-                OutlinedButton(onPressed: _guardando ? null : () => _guardarYContinuar(irADiagnostico: true), child: const Text('Quiero solucionar un problema')),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(onPressed: _guardando ? null : () => _guardarYContinuar(irADiagnostico: true), child: const Text('Quiero solucionar un problema')),
+                ),
               ],
             ),
           ),

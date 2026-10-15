@@ -126,7 +126,7 @@ class _TarjetaPrincipal extends StatelessWidget {
           const SizedBox(height: LumioSpace.s1),
           Text(subtitulo, style: TextStyle(color: context.colors.inkMuted, fontSize: 13)),
           const SizedBox(height: LumioSpace.s4),
-          FilledButton(onPressed: onTap, child: Text(botonPrimario)),
+          SizedBox(width: double.infinity, child: FilledButton(onPressed: onTap, child: Text(botonPrimario))),
         ],
       ),
     );

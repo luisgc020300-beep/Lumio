@@ -111,7 +111,10 @@ class _LeccionScreenState extends State<LeccionScreen> {
             top: false,
             child: Padding(
               padding: const EdgeInsets.all(LumioSpace.s4),
-              child: FilledButton(onPressed: _avanzando ? null : _siguiente, child: Text(_esUltimo ? 'Terminar lección' : 'Siguiente')),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(onPressed: _avanzando ? null : _siguiente, child: Text(_esUltimo ? 'Terminar lección' : 'Siguiente')),
+              ),
             ),
           ),
         ],

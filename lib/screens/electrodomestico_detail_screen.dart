@@ -145,10 +145,13 @@ class _TabAprender extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.all(LumioSpace.s4),
-          child: FilledButton.icon(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DiagnosticoScreen(electrodomesticoId: e.id))),
-            icon: const Icon(Icons.build_outlined),
-            label: const Text('Tengo un problema con este aparato'),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DiagnosticoScreen(electrodomesticoId: e.id))),
+              icon: const Icon(Icons.build_outlined),
+              label: const Text('Tengo un problema con este aparato'),
+            ),
           ),
         ),
         Expanded(

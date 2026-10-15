@@ -48,10 +48,13 @@ class _TabAparatos extends StatelessWidget {
             icon: Icons.kitchen_outlined,
             title: 'Todavía no has guardado ningún electrodoméstico',
             description: 'Haz una foto para que Lumio lo identifique y empieces a aprender sobre él.',
-            action: FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CamaraScreen())),
-              icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('Hacer una foto'),
+            action: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CamaraScreen())),
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Hacer una foto'),
+              ),
             ),
           );
         }

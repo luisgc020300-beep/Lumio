@@ -14,6 +14,10 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>lumio</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Lumio necesita la cámara para fotografiar tus electrodomésticos e identificarlos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lumio necesita acceso a tus fotos para que puedas elegir una imagen de un electrodoméstico desde tu galería.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
