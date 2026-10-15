@@ -8,6 +8,7 @@ import '../models/electrodomestico.dart';
 import '../services/diagnostico_service.dart';
 import '../services/electrodomestico_service.dart';
 import '../services/leccion_service.dart';
+import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
 import 'diagnostico_screen.dart';
@@ -95,7 +96,11 @@ class _TabResumen extends StatelessWidget {
         if (e.fotoUrl != null) ClipRRect(borderRadius: BorderRadius.circular(LumioRadius.lg), child: CachedNetworkImage(imageUrl: e.fotoUrl!, height: 200, width: double.infinity, fit: BoxFit.cover)),
         const SizedBox(height: LumioSpace.s4),
         Row(children: [
-          Chip(label: Text(e.categoria.etiqueta)),
+          Chip(
+            avatar: Icon(iconoCategoria(e.categoria.icono), size: 16, color: colorCategoria(context, e.categoria)),
+            label: Text(e.categoria.etiqueta),
+            backgroundColor: colorCategoria(context, e.categoria).withValues(alpha: 0.12),
+          ),
           const SizedBox(width: 6),
           Chip(
             label: Text(e.modeloVerificado ? 'Modelo verificado' : 'Identificación general'),

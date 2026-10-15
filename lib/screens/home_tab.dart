@@ -7,6 +7,7 @@ import '../models/electrodomestico.dart';
 import '../models/leccion.dart';
 import '../services/electrodomestico_service.dart';
 import '../services/leccion_service.dart';
+import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
 import 'camara_screen.dart';
@@ -58,16 +59,17 @@ class HomeTab extends StatelessWidget {
                 );
               }
               return Column(
-                children: items
-                    .map((e) => Card(
-                          child: ListTile(
-                            leading: CircleAvatar(backgroundColor: context.colors.brandTint, child: Icon(_iconoPara(e.categoria.icono), color: context.colors.brand)),
-                            title: Text(e.nombre),
-                            subtitle: Text(e.modeloVerificado ? '${e.fabricante ?? ''} ${e.modelo ?? ''}'.trim() : e.categoria.etiqueta),
-                            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ElectrodomesticoDetailScreen(id: e.id))),
-                          ),
-                        ))
-                    .toList(),
+                children: items.map((e) {
+                  final acento = colorCategoria(context, e.categoria);
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(backgroundColor: acento.withValues(alpha: 0.15), child: Icon(iconoCategoria(e.categoria.icono), color: acento)),
+                      title: Text(e.nombre),
+                      subtitle: Text(e.modeloVerificado ? '${e.fabricante ?? ''} ${e.modelo ?? ''}'.trim() : e.categoria.etiqueta),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ElectrodomesticoDetailScreen(id: e.id))),
+                    ),
+                  );
+                }).toList(),
               );
             },
           ),
@@ -80,15 +82,6 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  IconData _iconoPara(IconIdentificador i) => switch (i) {
-        IconIdentificador.lavadora => Icons.local_laundry_service_outlined,
-        IconIdentificador.lavavajillas => Icons.countertops_outlined,
-        IconIdentificador.frigorifico => Icons.kitchen_outlined,
-        IconIdentificador.horno => Icons.microwave_outlined,
-        IconIdentificador.aire => Icons.ac_unit_outlined,
-        IconIdentificador.pequeno => Icons.blender_outlined,
-        IconIdentificador.otro => Icons.devices_other_outlined,
-      };
 }
 
 class _TarjetaPrincipal extends StatelessWidget {
@@ -105,7 +98,11 @@ class _TarjetaPrincipal extends StatelessWidget {
     final color = tono ?? context.colors.brand;
     return Container(
       padding: const EdgeInsets.all(LumioSpace.s5),
-      decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(LumioRadius.lg), border: Border.all(color: context.colors.surfaceSunken)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(LumioRadius.lg),
+        boxShadow: [BoxShadow(color: context.colors.ink.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

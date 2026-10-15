@@ -21,6 +21,7 @@ class LumioColors extends ThemeExtension<LumioColors> {
     required this.brandOn,
     required this.brandTint,
     required this.lavanda,
+    required this.accentCyan,
     required this.success,
     required this.warning,
     required this.warningText,
@@ -41,6 +42,7 @@ class LumioColors extends ThemeExtension<LumioColors> {
   final Color brandOn;
   final Color brandTint;
   final Color lavanda; // acento decorativo, nunca semántico
+  final Color accentCyan; // acento decorativo (categorías), nunca semántico
   final Color success;
   final Color warning; // SOLO icono o fondo tenue -- como texto usa warningText
   final Color warningText;
@@ -61,6 +63,7 @@ class LumioColors extends ThemeExtension<LumioColors> {
     brandOn: Color(0xFFFFFFFF),
     brandTint: Color(0x24A99AE8),
     lavanda: Color(0xFFA99AE8),
+    accentCyan: Color(0xFF3FA7C9),
     success: Color(0xFF23856D),
     warning: Color(0xFFE5A23B),
     warningText: Color(0xFF8A5A1F),
@@ -82,6 +85,7 @@ class LumioColors extends ThemeExtension<LumioColors> {
     brandOn: Color(0xFF10142A),
     brandTint: Color(0x33A99AE8),
     lavanda: Color(0xFFBFB2F0),
+    accentCyan: Color(0xFF6FC4E0),
     success: Color(0xFF4FB996),
     warning: Color(0xFFF0B860),
     warningText: Color(0xFFF3C88A),
@@ -95,7 +99,7 @@ class LumioColors extends ThemeExtension<LumioColors> {
     Color? background, Color? surface, Color? surfaceMuted, Color? surfaceSunken,
     Color? ink, Color? inkMuted, Color? inkFaint,
     Color? brand, Color? brandStrong, Color? brandOn, Color? brandTint,
-    Color? lavanda, Color? success, Color? warning, Color? warningText,
+    Color? lavanda, Color? accentCyan, Color? success, Color? warning, Color? warningText,
     Color? error, Color? errorText, Color? overlay,
   }) {
     return LumioColors(
@@ -111,6 +115,7 @@ class LumioColors extends ThemeExtension<LumioColors> {
       brandOn: brandOn ?? this.brandOn,
       brandTint: brandTint ?? this.brandTint,
       lavanda: lavanda ?? this.lavanda,
+      accentCyan: accentCyan ?? this.accentCyan,
       success: success ?? this.success,
       warning: warning ?? this.warning,
       warningText: warningText ?? this.warningText,

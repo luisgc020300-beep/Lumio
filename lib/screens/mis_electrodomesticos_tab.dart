@@ -8,6 +8,7 @@ import '../models/electrodomestico.dart';
 import '../models/leccion.dart';
 import '../services/electrodomestico_service.dart';
 import '../services/leccion_service.dart';
+import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
 import 'camara_screen.dart';
@@ -59,12 +60,13 @@ class _TabAparatos extends StatelessWidget {
           itemCount: items.length,
           itemBuilder: (context, i) {
             final e = items[i];
+            final acento = colorCategoria(context, e.categoria);
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: e.fotoUrl != null
                     ? ClipRRect(borderRadius: BorderRadius.circular(LumioRadius.xs), child: CachedNetworkImage(imageUrl: e.fotoUrl!, width: 48, height: 48, fit: BoxFit.cover))
-                    : CircleAvatar(backgroundColor: context.colors.brandTint, child: Icon(Icons.kitchen_outlined, color: context.colors.brand)),
+                    : CircleAvatar(backgroundColor: acento.withValues(alpha: 0.15), child: Icon(iconoCategoria(e.categoria.icono), color: acento)),
                 title: Text(e.nombre),
                 subtitle: Text(e.modeloVerificado ? '${e.fabricante ?? ''} ${e.modelo ?? ''}'.trim() : e.categoria.etiqueta),
                 trailing: e.createdAt != null ? Text(DateFormat('d MMM', 'es_ES').format(e.createdAt!), style: TextStyle(fontSize: 11, color: context.colors.inkMuted)) : null,

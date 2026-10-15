@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../data/catalogo_lecciones.dart';
 import '../models/electrodomestico.dart';
 import '../services/leccion_service.dart';
+import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
 import 'leccion_screen.dart';
@@ -60,7 +61,7 @@ class _ExplorarTabState extends State<ExplorarTab> {
                     InputChip(
                       label: Text(_categoria!.etiqueta),
                       onDeleted: () => setState(() => _categoria = null),
-                      avatar: Icon(_iconoPara(_categoria!.icono), size: 16, color: context.colors.brand),
+                      avatar: Icon(iconoCategoria(_categoria!.icono), size: 16, color: colorCategoria(context, _categoria!)),
                     ),
                 ],
               ),
@@ -98,16 +99,6 @@ class _ExplorarTabState extends State<ExplorarTab> {
   }
 }
 
-IconData _iconoPara(IconIdentificador i) => switch (i) {
-      IconIdentificador.lavadora => Icons.local_laundry_service_outlined,
-      IconIdentificador.lavavajillas => Icons.countertops_outlined,
-      IconIdentificador.frigorifico => Icons.kitchen_outlined,
-      IconIdentificador.horno => Icons.microwave_outlined,
-      IconIdentificador.aire => Icons.ac_unit_outlined,
-      IconIdentificador.pequeno => Icons.blender_outlined,
-      IconIdentificador.otro => Icons.devices_other_outlined,
-    };
-
 class _TarjetaCategoria extends StatelessWidget {
   const _TarjetaCategoria({required this.categoria, required this.onTap});
   final CategoriaElectrodomestico categoria;
@@ -115,22 +106,28 @@ class _TarjetaCategoria extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final acento = colorCategoria(context, categoria);
     return Material(
       color: context.colors.surface,
       borderRadius: BorderRadius.circular(LumioRadius.md),
+      elevation: 0,
       child: InkWell(
         borderRadius: BorderRadius.circular(LumioRadius.md),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(LumioSpace.s3),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(LumioRadius.md), border: Border.all(color: context.colors.surfaceSunken)),
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(LumioRadius.md),
+            boxShadow: [BoxShadow(color: context.colors.ink.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 3))],
+          ),
           child: Row(
             children: [
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(color: context.colors.brandTint, borderRadius: BorderRadius.circular(LumioRadius.xs)),
-                child: Icon(_iconoPara(categoria.icono), size: 18, color: context.colors.brand),
+                decoration: BoxDecoration(color: acento.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(LumioRadius.xs)),
+                child: Icon(iconoCategoria(categoria.icono), size: 18, color: acento),
               ),
               const SizedBox(width: LumioSpace.s2),
               Expanded(
