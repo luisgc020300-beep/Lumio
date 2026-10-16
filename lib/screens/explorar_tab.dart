@@ -117,7 +117,7 @@ class _ExplorarTabState extends State<ExplorarTab> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            leading: Icon(Icons.auto_stories_outlined, color: context.colors.brand),
+                            leading: MiniaturaLeccion(leccion: l),
                             title: Text(l.titulo),
                             subtitle: Text(l.objetivo, maxLines: 2, overflow: TextOverflow.ellipsis),
                             trailing: const Icon(Icons.chevron_right),

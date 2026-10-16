@@ -84,6 +84,33 @@ void main() {
     });
   });
 
+  group('MiniaturaLeccion', () {
+    testWidgets('muestra la ilustración cuando la lección tiene una', (tester) async {
+      final leccion = catalogoLecciones.firstWhere((l) => l.id == 'lavadora_entender');
+      await tester.pumpWidget(_envolver(MiniaturaLeccion(leccion: leccion)));
+      await tester.pump();
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.byIcon(Icons.auto_stories_outlined), findsNothing);
+    });
+
+    testWidgets('muestra el icono genérico cuando la lección no tiene ilustración', (tester) async {
+      const leccion = Leccion(
+        id: 'sin-ilustracion',
+        titulo: 'Lección sin ilustración',
+        categoria: CategoriaElectrodomestico.otro,
+        objetivo: 'Probar el icono genérico',
+        nivel: 'principiante',
+        pasos: [PasoLeccion(tipo: TipoPasoLeccion.explicacion, titulo: 'Único paso', cuerpo: 'Cuerpo.')],
+      );
+      await tester.pumpWidget(_envolver(const MiniaturaLeccion(leccion: leccion)));
+      await tester.pump();
+
+      expect(find.byType(Image), findsNothing);
+      expect(find.byIcon(Icons.auto_stories_outlined), findsOneWidget);
+    });
+  });
+
   group('LeccionScreen -- comprobación interactiva', () {
     const leccion = Leccion(
       id: 'test',

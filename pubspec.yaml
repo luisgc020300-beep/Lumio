@@ -81,6 +81,12 @@ flutter:
   assets:
     - assets/icon/
     - assets/lecciones/lavadora_entender/
+    - assets/lecciones/lavadora_elegir_programa/
+    - assets/lecciones/frigorifico_entender/
+    - assets/lecciones/horno_entender/
+    - assets/lecciones/aire_acondicionado_entender/
+    - assets/lecciones/pequenos_electrodomesticos_cuidado/
+    - assets/lecciones/lavavajillas_entender/
     - assets/lecciones/radiador_entender/
     - assets/lecciones/grifo_entender/
     - assets/profesor/

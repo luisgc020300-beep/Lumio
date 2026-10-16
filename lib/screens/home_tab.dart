@@ -64,6 +64,12 @@ class HomeTab extends StatelessWidget {
           StreamBuilder<List<Electrodomestico>>(
             stream: ElectrodomesticoService.streamElectrodomesticos(),
             builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: LumioSpace.s4),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
               final items = (snapshot.data ?? []).take(3).toList();
               if (items.isEmpty) {
                 return const EmptyState(
@@ -213,7 +219,7 @@ class _TarjetaLeccionRecomendada extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(Icons.auto_stories_outlined, color: context.colors.brand),
+        leading: MiniaturaLeccion(leccion: leccion),
         title: Text(leccion.titulo),
         subtitle: Text(leccion.categoria.etiqueta),
         trailing: const Icon(Icons.chevron_right),

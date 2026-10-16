@@ -53,4 +53,17 @@ void main() {
     expect(radiador.pasos.any((p) => p.imagenAsset != null), isTrue);
     expect(grifo.pasos.any((p) => p.imagenAsset != null), isTrue);
   });
+
+  test('las 9 lecciones del catálogo tienen al menos una ilustración (cobertura visual completa)', () {
+    for (final l in catalogoLecciones) {
+      expect(l.primeraIlustracion, isNotNull, reason: '"${l.id}" todavía no tiene ninguna ilustración');
+    }
+    expect(catalogoLecciones.length, 9);
+  });
+
+  test('primeraIlustracion devuelve el primer imagenAsset entre los pasos, en orden', () {
+    final conDosImagenes = catalogoLecciones.firstWhere((l) => l.pasos.where((p) => p.imagenAsset != null).length >= 2);
+    final primeraEsperada = conDosImagenes.pasos.firstWhere((p) => p.imagenAsset != null).imagenAsset;
+    expect(conDosImagenes.primeraIlustracion, primeraEsperada);
+  });
 }

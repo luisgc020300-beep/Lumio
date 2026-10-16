@@ -73,6 +73,16 @@ class Leccion {
   /// true si requiere un electrodoméstico concreto guardado (no aplica a
   /// lecciones generales de categoría).
   final bool applianceEspecifico;
+
+  /// Primera ilustración de catálogo entre los pasos, si hay alguna --
+  /// usado como miniatura en las listas de lecciones (Explorar, Inicio)
+  /// en vez del icono genérico.
+  String? get primeraIlustracion {
+    for (final p in pasos) {
+      if (p.imagenAsset != null) return p.imagenAsset;
+    }
+    return null;
+  }
 }
 
 enum EstadoProgresoLeccion { enCurso, completada }

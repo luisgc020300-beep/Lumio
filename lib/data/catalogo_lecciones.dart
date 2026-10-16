@@ -72,6 +72,7 @@ final List<Leccion> catalogoLecciones = [
         titulo: 'Algodón 40°C',
         cuerpo: 'Es el programa de uso diario para ropa normal: camisetas, ropa interior, toallas finas. Buen equilibrio entre limpieza y cuidado del tejido.',
         porQueImporta: 'Usarlo por defecto evita gastar más agua/energía de la necesaria en la ropa de cada día.',
+        imagenAsset: 'assets/lecciones/lavadora_elegir_programa/dial.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
@@ -111,6 +112,7 @@ final List<Leccion> catalogoLecciones = [
         titulo: 'Las zonas principales',
         cuerpo: 'La puerta es la zona más cálida y con más variación de temperatura, porque se abre constantemente. El cajón de verduras mantiene más humedad para que no se marchiten. El congelador es una zona aparte, de frío constante, pensada para conservación larga.',
         porQueImporta: 'Guardar cada alimento en la zona adecuada hace que dure más y reduce el desperdicio de comida.',
+        imagenAsset: 'assets/lecciones/frigorifico_entender/zonas.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
@@ -150,6 +152,7 @@ final List<Leccion> catalogoLecciones = [
         titulo: 'Los modos principales',
         cuerpo: 'Calor arriba y abajo es el modo tradicional, bueno para asados y platos que necesitan dorarse por ambos lados. El grill solo calienta desde arriba con fuerza, ideal para gratinar. El modo aire o ventilador reparte el calor de forma uniforme con un ventilador, muy útil si cocinas en varias bandejas a la vez.',
         porQueImporta: 'Elegir el modo equivocado es una causa habitual de que algo se queme por fuera y quede crudo por dentro, o al revés.',
+        imagenAsset: 'assets/lecciones/horno_entender/modos.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
@@ -189,6 +192,7 @@ final List<Leccion> catalogoLecciones = [
         titulo: 'Las partes principales',
         cuerpo: 'El filtro de aire atrapa polvo antes de que entre en la unidad -- si se ensucia, el aparato enfría peor y gasta más. La unidad exterior es la que expulsa el calor que saca de la habitación cuando enfría. El mando suele incluir, además de frío, los modos calor, deshumidificar y solo ventilador.',
         porQueImporta: 'Un filtro sucio es la causa más habitual de que un aire acondicionado "enfríe poco" sin que el aparato esté realmente averiado.',
+        imagenAsset: 'assets/lecciones/aire_acondicionado_entender/filtro.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
@@ -228,6 +232,7 @@ final List<Leccion> catalogoLecciones = [
         titulo: 'La regla más importante',
         cuerpo: 'Desenchufa siempre el aparato antes de limpiarlo, y nunca sumerjas en agua la base donde está el motor o las conexiones eléctricas -- solo las partes extraíbles (jarra, cuchillas, filtros) suelen poder lavarse con agua.',
         porQueImporta: 'Es la causa más común de que un pequeño electrodoméstico se estropee antes de tiempo, o incluso de que sea peligroso seguir usándolo.',
+        imagenAsset: 'assets/lecciones/pequenos_electrodomesticos_cuidado/batidora.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
@@ -266,6 +271,7 @@ final List<Leccion> catalogoLecciones = [
         tipo: TipoPasoLeccion.visual,
         titulo: 'Las partes principales',
         cuerpo: 'El dosificador de detergente libera el jabón en el momento correcto. El depósito de abrillantador ayuda a que la vajilla seque sin marcas. El depósito de sal (si tu lavavajillas lo tiene) ablanda el agua para que el detergente funcione mejor.',
+        imagenAsset: 'assets/lecciones/lavavajillas_entender/depositos.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,

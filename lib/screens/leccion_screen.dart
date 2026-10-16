@@ -347,3 +347,26 @@ Future<void> abrirLeccion(BuildContext context, Leccion leccion) async {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => LeccionScreen(leccion: leccion, progresoId: progresoId)));
   }
 }
+
+/// Miniatura para las listas de lecciones (Explorar, Inicio) -- la
+/// primera ilustración de catálogo de la lección si tiene alguna, o el
+/// icono genérico de siempre si todavía no tiene ninguna.
+class MiniaturaLeccion extends StatelessWidget {
+  const MiniaturaLeccion({required this.leccion, this.size = 44, super.key});
+  final Leccion leccion;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = leccion.primeraIlustracion;
+    if (asset == null) {
+      return Icon(Icons.auto_stories_outlined, color: context.colors.brand);
+    }
+    return ExcludeSemantics(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(LumioRadius.xs),
+        child: Image.asset(asset, width: size, height: size, fit: BoxFit.cover),
+      ),
+    );
+  }
+}
