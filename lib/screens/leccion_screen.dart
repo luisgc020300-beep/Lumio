@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/leccion.dart';
 import '../services/leccion_service.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/app_error.dart';
 
 class LeccionScreen extends StatefulWidget {
   const LeccionScreen({required this.leccion, required this.progresoId, this.pasoInicial = 0, super.key});
@@ -45,6 +46,8 @@ class _LeccionScreenState extends State<LeccionScreen> {
           _seleccionQuiz = null;
         });
       }
+    } catch (e, st) {
+      if (mounted) AppError.show(context, 'No se ha podido guardar tu progreso. Inténtalo de nuevo.', error: e, stackTrace: st);
     } finally {
       // Si "Terminar" ya cerró esta pantalla, el widget está desmontado --
       // sin este chequeo, el botón se queda bloqueado para siempre si el

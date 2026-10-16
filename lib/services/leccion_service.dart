@@ -3,14 +3,23 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/leccion.dart';
 import 'analytics_service.dart';
 import 'stream_error_logging.dart';
 
 class LeccionService {
-  static final _db = FirebaseFirestore.instance;
-  static String get _uid => FirebaseAuth.instance.currentUser!.uid;
+  /// Seams de solo test -- nunca se asignan en código de producción. Permiten
+  /// probar el contrato de progreso (iniciar/avanzar/completar) contra un
+  /// Firestore falso sin tocar la firma pública de ningún método.
+  @visibleForTesting
+  static FirebaseFirestore? debugFirestoreOverride;
+  @visibleForTesting
+  static String? debugUidOverride;
+
+  static FirebaseFirestore get _db => debugFirestoreOverride ?? FirebaseFirestore.instance;
+  static String get _uid => debugUidOverride ?? FirebaseAuth.instance.currentUser!.uid;
   static CollectionReference<Map<String, dynamic>> get _col => _db.collection('users').doc(_uid).collection('progresoLecciones');
 
   static Stream<List<ProgresoLeccion>> streamProgreso() {
