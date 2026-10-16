@@ -19,6 +19,48 @@ function claveConfigurada(apiKey) {
 const CATEGORIAS = ['lavadora_secadora', 'lavavajillas', 'frigorifico_congelador', 'horno_placa', 'aire_acondicionado', 'pequeno_electrodomestico', 'otro'];
 
 // =============================================================================
+// Desde que Anthropic retiró el tool_choice forzado en Sonnet 5.5, el modelo
+// puede decidir no llamar a la herramienta (p. ej. ante un mensaje corto o
+// ambiguo como "la tuerca") y responder solo con texto -- antes era
+// imposible porque tool_choice:{type:"tool"} lo obligaba. Sin este
+// reintento, ese turno concreto fallaba en seco para el usuario (ningún
+// error de Anthropic, solo "no se pudo analizar/enviar") sin dejar rastro
+// en los logs. Un único reintento con un recordatorio explícito resuelve
+// la inmensa mayoría de estos casos sin duplicar coste en el camino feliz.
+// =============================================================================
+async function llamarClaudeConHerramienta({ apiKey, nombreFuncion, system, tools, messages, maxTokens = 1024 }) {
+  for (let intento = 0; intento < 2; intento++) {
+    const cuerpoMensajes = intento === 0 ? messages : [...messages, { role: 'user', content: 'Recuerda: responde SIEMPRE llamando a la herramienta disponible, nunca con texto libre.' }];
+
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+        body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, tools, tool_choice: { type: 'auto' }, messages: cuerpoMensajes }),
+      });
+    } catch (e) {
+      console.error(`${nombreFuncion} fetch error:`, e);
+      throw new HttpsError('unavailable', 'No se pudo contactar con el servicio de IA.');
+    }
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error(`${nombreFuncion} Anthropic error ${res.status}:`, body);
+      throw new HttpsError('internal', `Error del servicio de IA: ${res.status}`);
+    }
+
+    const data = await res.json();
+    const toolUse = (data.content || []).find((b) => b.type === 'tool_use');
+    if (toolUse) return toolUse.input;
+
+    console.error(`${nombreFuncion}: el modelo no llamó a la herramienta en el intento ${intento}`, JSON.stringify(data.content));
+  }
+
+  throw new HttpsError('internal', 'El modelo no devolvió una respuesta estructurada.');
+}
+
+// =============================================================================
 // Cuota diaria por usuario -- sin esto, una clave real de Anthropic
 // configurada no tiene ningún freno de gasto: un usuario (o un cliente
 // comprometido que llame a la función saltándose la app) podría generar
@@ -113,44 +155,22 @@ exports.identificarElectrodomestico = onCall({ region: REGION, secrets: [_anthro
   const [bytes] = await bucket.file(storagePath).download();
   const base64 = bytes.toString('base64');
 
-  let res;
-  try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1024,
-        system: IDENTIFY_SYSTEM_PROMPT,
-        tools: [IDENTIFY_TOOL],
-        tool_choice: { type: 'auto' },
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-              { type: 'text', text: 'Identifica este electrodoméstico.' },
-            ],
-          },
+  const raw = await llamarClaudeConHerramienta({
+    apiKey,
+    nombreFuncion: 'identificarElectrodomestico',
+    system: IDENTIFY_SYSTEM_PROMPT,
+    tools: [IDENTIFY_TOOL],
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+          { type: 'text', text: 'Identifica este electrodoméstico.' },
         ],
-      }),
-    });
-  } catch (e) {
-    console.error('identificarElectrodomestico fetch error:', e);
-    throw new HttpsError('unavailable', 'No se pudo contactar con el servicio de IA.');
-  }
+      },
+    ],
+  });
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    console.error(`identificarElectrodomestico Anthropic error ${res.status}:`, body);
-    throw new HttpsError('internal', `Error del servicio de IA: ${res.status}`);
-  }
-
-  const data = await res.json();
-  const toolUse = (data.content || []).find((b) => b.type === 'tool_use');
-  if (!toolUse) throw new HttpsError('internal', 'El modelo no devolvió una identificación estructurada.');
-
-  const raw = toolUse.input;
   return {
     mode: 'real',
     category: raw.category,
@@ -311,36 +331,13 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
     ? `${TROUBLESHOOT_SYSTEM_PROMPT}\n\nHistorial conocido de este electrodoméstico (solo como referencia -- no asumas que la causa actual es la misma sin evidencia nueva del usuario en esta conversación):\n${historialPrevio.join('\n')}`
     : TROUBLESHOOT_SYSTEM_PROMPT;
 
-  let res;
-  try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1024,
-        system: systemPrompt,
-        tools: [TROUBLESHOOT_TOOL],
-        tool_choice: { type: 'auto' },
-        messages: messages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
-      }),
-    });
-  } catch (e) {
-    console.error('investigarProblema fetch error:', e);
-    throw new HttpsError('unavailable', 'No se pudo contactar con el servicio de IA.');
-  }
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    console.error(`investigarProblema Anthropic error ${res.status}:`, body);
-    throw new HttpsError('internal', `Error del servicio de IA: ${res.status}`);
-  }
-
-  const data = await res.json();
-  const toolUse = (data.content || []).find((b) => b.type === 'tool_use');
-  if (!toolUse) throw new HttpsError('internal', 'El modelo no devolvió una respuesta estructurada.');
-
-  const raw = toolUse.input;
+  const raw = await llamarClaudeConHerramienta({
+    apiKey,
+    nombreFuncion: 'investigarProblema',
+    system: systemPrompt,
+    tools: [TROUBLESHOOT_TOOL],
+    messages: messages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+  });
   await registrarAprendizajeAgregado(request.auth.uid, electrodomesticoId, raw);
   return { mode: 'real', content: raw.content, status: raw.status, safetyFlag: raw.safety_flag === true, tuvoHistorialPrevio: historialPrevio.length > 0 };
 });
