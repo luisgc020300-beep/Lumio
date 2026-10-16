@@ -7,7 +7,6 @@ import '../models/electrodomestico.dart';
 import '../models/leccion.dart';
 import '../services/analytics_service.dart';
 import '../services/electrodomestico_service.dart';
-import '../services/leccion_service.dart';
 import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
@@ -214,12 +213,7 @@ class _TarjetaLeccionRecomendada extends StatelessWidget {
         title: Text(leccion.titulo),
         subtitle: Text(leccion.categoria.etiqueta),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () async {
-          final progresoId = await LeccionService.iniciarOContinuar(leccion.id);
-          if (context.mounted) {
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => LeccionScreen(leccion: leccion, progresoId: progresoId)));
-          }
-        },
+        onTap: () => abrirLeccion(context, leccion),
       ),
     );
   }

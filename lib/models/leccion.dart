@@ -6,7 +6,15 @@ import 'electrodomestico.dart';
 enum TipoPasoLeccion { explicacion, visual, tarea, comprobacion, resumen }
 
 class PasoLeccion {
-  const PasoLeccion({required this.tipo, required this.titulo, required this.cuerpo, this.imagenAsset, this.porQueImporta});
+  const PasoLeccion({
+    required this.tipo,
+    required this.titulo,
+    required this.cuerpo,
+    this.imagenAsset,
+    this.porQueImporta,
+    this.opciones,
+    this.respuestaCorrecta,
+  });
 
   final TipoPasoLeccion tipo;
   final String titulo;
@@ -15,8 +23,15 @@ class PasoLeccion {
   /// nunca una foto real del aparato del usuario en lecciones de catálogo.
   final String? imagenAsset;
   /// "Por qué importa" -- el principio central del producto: explicar el
-  /// motivo, no solo el paso.
+  /// motivo, no solo el paso. En un paso de tipo [TipoPasoLeccion.comprobacion]
+  /// con [opciones], se reutiliza como explicación de la respuesta correcta.
   final String? porQueImporta;
+  /// Opciones del quiz -- solo en pasos [TipoPasoLeccion.comprobacion] con
+  /// comprobación interactiva real. Null en el resto (incluida la variante
+  /// antigua de solo texto, que sigue siendo válida).
+  final List<String>? opciones;
+  /// Índice de la opción correcta dentro de [opciones].
+  final int? respuestaCorrecta;
 
   factory PasoLeccion.fromMap(Map<String, dynamic> m) => PasoLeccion(
         tipo: TipoPasoLeccion.values.firstWhere((t) => t.name == m['tipo'], orElse: () => TipoPasoLeccion.explicacion),
@@ -24,6 +39,8 @@ class PasoLeccion {
         cuerpo: m['cuerpo'] as String? ?? '',
         imagenAsset: m['imagenAsset'] as String?,
         porQueImporta: m['porQueImporta'] as String?,
+        opciones: (m['opciones'] as List?)?.cast<String>(),
+        respuestaCorrecta: (m['respuestaCorrecta'] as num?)?.toInt(),
       );
 }
 

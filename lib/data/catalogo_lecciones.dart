@@ -25,16 +25,26 @@ final List<Leccion> catalogoLecciones = [
         titulo: 'Las partes principales',
         cuerpo: 'El cajetín de detergente añade el jabón y suavizante en el momento adecuado del ciclo. El tambor es donde va la ropa. El filtro atrapa pelusa y objetos pequeños, y hay que limpiarlo de vez en cuando.',
         porQueImporta: 'Saber dónde está cada parte te ayuda a usar la lavadora correctamente y a solucionar problemas simples sin ayuda.',
+        imagenAsset: 'assets/lecciones/lavadora_entender/partes.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
         titulo: '¿Cómo funciona por dentro?',
         cuerpo: 'La lavadora mezcla agua y detergente, calienta el agua si el programa lo pide, hace girar el tambor para mover la ropa, y al final expulsa el agua sucia (el "centrifugado" la seca parcialmente girando muy rápido).',
+        imagenAsset: 'assets/lecciones/lavadora_entender/ciclo.webp',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: '¿Para qué sirve el filtro? Atrapa pelusa y objetos pequeños que se sueltan de la ropa durante el lavado, para que no lleguen a la bomba de desagüe.',
+        cuerpo: '¿Para qué sirve el filtro?',
+        opciones: [
+          'Para que la ropa salga perfumada',
+          'Atrapa pelusa y objetos pequeños para que no lleguen a la bomba de desagüe',
+          'Calienta el agua antes del lavado',
+          'Dosifica el detergente automáticamente',
+        ],
+        respuestaCorrecta: 1,
+        porQueImporta: 'Por eso hay que limpiarlo de vez en cuando: si se atasca, el agua no desagua bien o la bomba puede dañarse.',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,

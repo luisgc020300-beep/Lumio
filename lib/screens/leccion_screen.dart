@@ -18,8 +18,17 @@ class LeccionScreen extends StatefulWidget {
 class _LeccionScreenState extends State<LeccionScreen> {
   late int _paso = widget.pasoInicial.clamp(0, widget.leccion.pasos.length - 1);
   bool _avanzando = false;
+  /// Opción elegida en el paso de comprobación actual -- se reinicia al
+  /// avanzar de paso. Vive aquí (no en un widget hijo) porque es el estado
+  /// más simple posible para un quiz de un único paso visible a la vez.
+  int? _seleccionQuiz;
 
   bool get _esUltimo => _paso == widget.leccion.pasos.length - 1;
+
+  bool get _quizSinResponder {
+    final paso = widget.leccion.pasos[_paso];
+    return paso.opciones != null && _seleccionQuiz == null;
+  }
 
   Future<void> _siguiente() async {
     setState(() => _avanzando = true);
@@ -30,7 +39,12 @@ class _LeccionScreenState extends State<LeccionScreen> {
         return;
       }
       await LeccionService.avanzarPaso(widget.progresoId, _paso + 1, esUltimoPaso: false);
-      if (mounted) setState(() => _paso += 1);
+      if (mounted) {
+        setState(() {
+          _paso += 1;
+          _seleccionQuiz = null;
+        });
+      }
     } finally {
       // Si "Terminar" ya cerró esta pantalla, el widget está desmontado --
       // sin este chequeo, el botón se queda bloqueado para siempre si el
@@ -97,9 +111,22 @@ class _LeccionScreenState extends State<LeccionScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(paso.titulo, style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22)),
+                if (paso.imagenAsset != null) ...[
+                  const SizedBox(height: LumioSpace.s4),
+                  _IlustracionPaso(asset: paso.imagenAsset!, descripcion: paso.titulo),
+                ],
                 const SizedBox(height: LumioSpace.s4),
                 Text(paso.cuerpo, style: const TextStyle(fontSize: 15, height: 1.4)),
-                if (paso.porQueImporta != null) ...[
+                if (paso.opciones != null) ...[
+                  const SizedBox(height: LumioSpace.s4),
+                  _Comprobacion(
+                    opciones: paso.opciones!,
+                    correcta: paso.respuestaCorrecta!,
+                    explicacion: paso.porQueImporta,
+                    seleccion: _seleccionQuiz,
+                    onSeleccionar: (i) => setState(() => _seleccionQuiz = i),
+                  ),
+                ] else if (paso.porQueImporta != null) ...[
                   const SizedBox(height: LumioSpace.s4),
                   Container(
                     padding: const EdgeInsets.all(LumioSpace.s3),
@@ -120,7 +147,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
               padding: const EdgeInsets.all(LumioSpace.s4),
               child: SizedBox(
                 width: double.infinity,
-                child: FilledButton(onPressed: _avanzando ? null : _siguiente, child: Text(_esUltimo ? 'Terminar lección' : 'Siguiente')),
+                child: FilledButton(onPressed: (_avanzando || _quizSinResponder) ? null : _siguiente, child: Text(_esUltimo ? 'Terminar lección' : 'Siguiente')),
               ),
             ),
           ),
@@ -136,4 +163,155 @@ class _LeccionScreenState extends State<LeccionScreen> {
         TipoPasoLeccion.comprobacion => 'COMPRUEBA LO APRENDIDO',
         TipoPasoLeccion.resumen => 'RESUMEN',
       };
+}
+
+/// Ilustración 2D de catálogo (asset local, nunca una llamada de red) --
+/// se omite sin dejar hueco cuando el paso no tiene una asociada.
+class _IlustracionPaso extends StatelessWidget {
+  const _IlustracionPaso({required this.asset, required this.descripcion});
+  final String asset;
+  final String descripcion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      image: true,
+      label: 'Ilustración: $descripcion',
+      child: ExcludeSemantics(
+        child: Container(
+          width: double.infinity,
+          height: 200,
+          padding: const EdgeInsets.all(LumioSpace.s2),
+          decoration: BoxDecoration(color: context.colors.surfaceMuted, borderRadius: BorderRadius.circular(LumioRadius.md)),
+          child: Image.asset(asset, fit: BoxFit.contain),
+        ),
+      ),
+    );
+  }
+}
+
+/// Comprobación interactiva real: selección inmediata = feedback inmediato,
+/// sin botón "Comprobar" aparte -- un único control de acción por pantalla,
+/// igual que el resto de Lumio. Una respuesta incorrecta no bloquea seguir
+/// probando otras opciones.
+class _Comprobacion extends StatelessWidget {
+  const _Comprobacion({
+    required this.opciones,
+    required this.correcta,
+    required this.explicacion,
+    required this.seleccion,
+    required this.onSeleccionar,
+  });
+
+  final List<String> opciones;
+  final int correcta;
+  final String? explicacion;
+  final int? seleccion;
+  final ValueChanged<int> onSeleccionar;
+
+  @override
+  Widget build(BuildContext context) {
+    final respondido = seleccion != null;
+    final acerto = seleccion == correcta;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < opciones.length; i++) ...[
+          _OpcionQuiz(
+            texto: opciones[i],
+            esCorrecta: i == correcta,
+            esSeleccionada: i == seleccion,
+            mostrarResultado: respondido,
+            onTap: () => onSeleccionar(i),
+          ),
+          if (i != opciones.length - 1) const SizedBox(height: LumioSpace.s2),
+        ],
+        if (respondido) ...[
+          const SizedBox(height: LumioSpace.s4),
+          Container(
+            padding: const EdgeInsets.all(LumioSpace.s3),
+            decoration: BoxDecoration(
+              color: (acerto ? context.colors.success : context.colors.error).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(LumioRadius.sm),
+            ),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(acerto ? Icons.check_circle_outline : Icons.cancel_outlined, size: 18, color: acerto ? context.colors.success : context.colors.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  acerto
+                      ? (explicacion ?? '¡Correcto!')
+                      : 'Esa no es. ${explicacion != null ? explicacion! : "Prueba con otra opción."}',
+                  style: TextStyle(fontSize: 13, color: acerto ? context.colors.ink : context.colors.errorText),
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _OpcionQuiz extends StatelessWidget {
+  const _OpcionQuiz({required this.texto, required this.esCorrecta, required this.esSeleccionada, required this.mostrarResultado, required this.onTap});
+  final String texto;
+  final bool esCorrecta;
+  final bool esSeleccionada;
+  final bool mostrarResultado;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    Color borde = context.colors.ink.withValues(alpha: 0.15);
+    Color? fondo;
+    IconData? icono;
+    Color? colorIcono;
+
+    if (mostrarResultado && esCorrecta) {
+      borde = context.colors.success;
+      fondo = context.colors.success.withValues(alpha: 0.1);
+      icono = Icons.check_circle_outline;
+      colorIcono = context.colors.success;
+    } else if (mostrarResultado && esSeleccionada) {
+      borde = context.colors.error;
+      fondo = context.colors.error.withValues(alpha: 0.1);
+      icono = Icons.cancel_outlined;
+      colorIcono = context.colors.error;
+    } else if (esSeleccionada) {
+      borde = context.colors.brand;
+    }
+
+    return Semantics(
+      button: true,
+      selected: esSeleccionada,
+      label: texto,
+      child: Material(
+        color: fondo ?? Colors.transparent,
+        borderRadius: BorderRadius.circular(LumioRadius.sm),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(LumioRadius.sm),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: LumioSpace.s3, vertical: LumioSpace.s3),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(LumioRadius.sm), border: Border.all(color: borde, width: esSeleccionada ? 2 : 1)),
+            child: Row(children: [
+              Expanded(child: Text(texto, style: const TextStyle(fontSize: 14))),
+              if (icono != null) ...[const SizedBox(width: 8), Icon(icono, size: 18, color: colorIcono)],
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Punto único de navegación a una lección -- evita repetir el mismo
+/// `iniciarOContinuar` + `Navigator.push` en cada pantalla que enlaza a una.
+Future<void> abrirLeccion(BuildContext context, Leccion leccion) async {
+  final progresoId = await LeccionService.iniciarOContinuar(leccion.id);
+  if (context.mounted) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => LeccionScreen(leccion: leccion, progresoId: progresoId)));
+  }
 }

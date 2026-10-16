@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../data/catalogo_lecciones.dart';
 import '../models/electrodomestico.dart';
-import '../services/leccion_service.dart';
 import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
@@ -81,12 +80,7 @@ class _ExplorarTabState extends State<ExplorarTab> {
                             title: Text(l.titulo),
                             subtitle: Text(l.objetivo, maxLines: 2, overflow: TextOverflow.ellipsis),
                             trailing: const Icon(Icons.chevron_right),
-                            onTap: () async {
-                              final progresoId = await LeccionService.iniciarOContinuar(l.id);
-                              if (context.mounted) {
-                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => LeccionScreen(leccion: l, progresoId: progresoId)));
-                              }
-                            },
+                            onTap: () => abrirLeccion(context, l),
                           ),
                         );
                       },
