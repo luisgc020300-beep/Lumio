@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../data/catalogo_lecciones.dart';
+import '../data/mensajes_profesor.dart';
 import '../models/electrodomestico.dart';
 import '../models/leccion.dart';
 import '../services/analytics_service.dart';
@@ -10,6 +11,7 @@ import '../services/electrodomestico_service.dart';
 import '../theme/categoria_estilos.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/profesor_lumio.dart';
 import 'ajustes_screen.dart';
 import 'camara_screen.dart';
 import 'diagnostico_screen.dart';
@@ -37,6 +39,8 @@ class HomeTab extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(LumioSpace.s4),
         children: [
+          const ProfesorLumio(pose: PoseProfesor.saludo, mensaje: saludoHome),
+          const SizedBox(height: LumioSpace.s4),
           _TarjetaPrincipal(
             icon: Icons.photo_camera_outlined,
             titulo: 'Enséñame un aparato',

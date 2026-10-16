@@ -1,10 +1,12 @@
 // lib/screens/leccion_screen.dart
 import 'package:flutter/material.dart';
 
+import '../data/mensajes_profesor.dart';
 import '../models/leccion.dart';
 import '../services/leccion_service.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/app_error.dart';
+import '../widgets/profesor_lumio.dart';
 
 class LeccionScreen extends StatefulWidget {
   const LeccionScreen({required this.leccion, required this.progresoId, this.pasoInicial = 0, super.key});
@@ -29,6 +31,28 @@ class _LeccionScreenState extends State<LeccionScreen> {
   bool get _quizSinResponder {
     final paso = widget.leccion.pasos[_paso];
     return paso.opciones != null && _seleccionQuiz == null;
+  }
+
+  /// Dónde y con qué mensaje aparece el profesor virtual -- selectivo, no
+  /// en cada paso: solo en la bienvenida, en la comprobación (antes y
+  /// después de responder) y en el cierre, para no saturar la pantalla.
+  ({PoseProfesor pose, String mensaje})? _contextoProfesor(PasoLeccion paso) {
+    if (paso.tipo == TipoPasoLeccion.comprobacion && paso.opciones != null) {
+      if (_seleccionQuiz == null) {
+        return (pose: PoseProfesor.saludo, mensaje: pistaComprobacion(widget.leccion.id));
+      }
+      final acerto = _seleccionQuiz == paso.respuestaCorrecta;
+      return acerto
+          ? (pose: PoseProfesor.celebrando, mensaje: feedbackCorrecto(widget.leccion.id))
+          : (pose: PoseProfesor.animando, mensaje: feedbackIncorrecto(widget.leccion.id));
+    }
+    if (paso.tipo == TipoPasoLeccion.resumen) {
+      return (pose: PoseProfesor.celebrando, mensaje: cierreLeccion(widget.leccion.id));
+    }
+    if (_paso == 0) {
+      return (pose: PoseProfesor.saludo, mensaje: saludoLeccion(widget.leccion.titulo));
+    }
+    return null;
   }
 
   Future<void> _siguiente() async {
@@ -66,7 +90,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(Icons.celebration_outlined, size: 40, color: context.colors.success),
+            ProfesorLumio(pose: PoseProfesor.celebrando, mensaje: cierreLeccion(widget.leccion.id)),
             const SizedBox(height: LumioSpace.s3),
             Text('¡Lección completada!', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
             const SizedBox(height: LumioSpace.s2),
@@ -89,6 +113,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
   Widget build(BuildContext context) {
     final paso = widget.leccion.pasos[_paso];
     final progreso = (_paso + 1) / widget.leccion.pasos.length;
+    final contextoProfesor = _contextoProfesor(paso);
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.leccion.titulo, maxLines: 1, overflow: TextOverflow.ellipsis)),
@@ -114,6 +139,10 @@ class _LeccionScreenState extends State<LeccionScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(paso.titulo, style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22)),
+                if (contextoProfesor != null) ...[
+                  const SizedBox(height: LumioSpace.s3),
+                  ProfesorLumio(pose: contextoProfesor.pose, mensaje: contextoProfesor.mensaje),
+                ],
                 if (paso.imagenAsset != null) ...[
                   const SizedBox(height: LumioSpace.s4),
                   _IlustracionPaso(asset: paso.imagenAsset!, descripcion: paso.titulo),

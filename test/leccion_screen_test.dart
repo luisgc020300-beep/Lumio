@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:lumio/data/catalogo_lecciones.dart';
+import 'package:lumio/data/mensajes_profesor.dart';
 import 'package:lumio/models/electrodomestico.dart';
 import 'package:lumio/models/leccion.dart';
 import 'package:lumio/screens/leccion_screen.dart';
@@ -57,10 +58,12 @@ void main() {
       await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: 'test')));
       await tester.pump();
 
-      expect(find.byType(Image), findsOneWidget);
+      // 2, no 1: la ilustración del paso + el avatar del profesor virtual,
+      // que también aparece en el primer paso de toda lección.
+      expect(find.byType(Image), findsNWidgets(2));
     });
 
-    testWidgets('un paso sin imagenAsset no representa ninguna imagen ni deja hueco', (tester) async {
+    testWidgets('un paso sin imagenAsset no representa ninguna imagen de ilustración ni deja hueco', (tester) async {
       const leccion = Leccion(
         id: 'test',
         titulo: 'Lección de prueba',
@@ -75,7 +78,9 @@ void main() {
       await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: 'test')));
       await tester.pump();
 
-      expect(find.byType(Image), findsNothing);
+      // 1, no 0: el avatar del profesor virtual en el primer paso -- la
+      // propia lección no tiene ninguna ilustración de catálogo.
+      expect(find.byType(Image), findsOneWidget);
     });
   });
 
@@ -148,6 +153,84 @@ void main() {
       await tester.pump();
       expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
       expect(find.byIcon(Icons.cancel_outlined), findsNothing);
+    });
+  });
+
+  group('LeccionScreen -- profesor virtual', () {
+    const leccion = Leccion(
+      id: 'profesor-test',
+      titulo: 'Lección para el profesor',
+      categoria: CategoriaElectrodomestico.lavadoraSecadora,
+      objetivo: 'Probar al profesor virtual',
+      nivel: 'principiante',
+      pasos: [
+        PasoLeccion(tipo: TipoPasoLeccion.explicacion, titulo: 'Intro', cuerpo: 'Cuerpo.'),
+        PasoLeccion(
+          tipo: TipoPasoLeccion.comprobacion,
+          titulo: 'Comprueba',
+          cuerpo: '¿Cuál es la correcta?',
+          opciones: ['Incorrecta', 'Correcta'],
+          respuestaCorrecta: 1,
+        ),
+        PasoLeccion(tipo: TipoPasoLeccion.resumen, titulo: 'Resumen', cuerpo: 'Fin.'),
+      ],
+    );
+    const progresoId = 'progreso-profesor-test';
+
+    // Avanzar de paso (incluso sin ser el último) sí llama a
+    // LeccionService.avanzarPaso -- se necesita el mismo Firestore falso
+    // precargado que en los grupos de abajo, con el documento ya creado
+    // (avanzarPaso hace un update(), que falla sobre un documento que no
+    // existe).
+    setUp(() async {
+      final db = FakeFirebaseFirestore();
+      LeccionService.debugFirestoreOverride = db;
+      LeccionService.debugUidOverride = 'uid-test';
+      await db.collection('users').doc('uid-test').collection('progresoLecciones').doc(progresoId).set({
+        'leccionId': leccion.id,
+        'pasoActual': 0,
+        'estado': 'enCurso',
+      });
+    });
+
+    tearDown(() {
+      LeccionService.debugFirestoreOverride = null;
+      LeccionService.debugUidOverride = null;
+    });
+
+    testWidgets('aparece en el primer paso saludando con el título de la lección', (tester) async {
+      await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: progresoId)));
+      await tester.pump();
+
+      expect(find.text(saludoLeccion(leccion.titulo)), findsOneWidget);
+    });
+
+    testWidgets('en la comprobación, da una pista antes de responder y cambia de mensaje tras acertar', (tester) async {
+      await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: progresoId)));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente')); // avanza del paso 0 (intro) al de comprobación
+      await tester.pump();
+
+      expect(find.text(pistaComprobacion(leccion.id)), findsOneWidget);
+      expect(find.text(feedbackCorrecto(leccion.id)), findsNothing);
+
+      await tester.tap(find.text('Correcta'));
+      await tester.pump();
+
+      expect(find.text(feedbackCorrecto(leccion.id)), findsOneWidget);
+      expect(find.text(pistaComprobacion(leccion.id)), findsNothing);
+    });
+
+    testWidgets('en la comprobación, cambia a mensaje de ánimo tras fallar', (tester) async {
+      await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: progresoId)));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente'));
+      await tester.pump();
+
+      await tester.tap(find.text('Incorrecta'));
+      await tester.pump();
+
+      expect(find.text(feedbackIncorrecto(leccion.id)), findsOneWidget);
     });
   });
 
