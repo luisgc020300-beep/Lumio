@@ -11,6 +11,8 @@ IconData iconoCategoria(IconIdentificador i) => switch (i) {
       IconIdentificador.horno => Icons.microwave_outlined,
       IconIdentificador.aire => Icons.ac_unit_outlined,
       IconIdentificador.pequeno => Icons.blender_outlined,
+      IconIdentificador.radiador => Icons.heat_pump_outlined,
+      IconIdentificador.grifo => Icons.water_drop_outlined,
       IconIdentificador.otro => Icons.devices_other_outlined,
     };
 
@@ -25,6 +27,8 @@ Color colorCategoria(BuildContext context, CategoriaElectrodomestico categoria) 
     CategoriaElectrodomestico.hornoPlaca => c.warning,
     CategoriaElectrodomestico.aireAcondicionado => c.accentCyan,
     CategoriaElectrodomestico.pequenoElectrodomestico => c.brandStrong,
+    CategoriaElectrodomestico.radiador => c.error,
+    CategoriaElectrodomestico.grifo => c.accentCyan,
     CategoriaElectrodomestico.otro => c.inkMuted,
   };
 }

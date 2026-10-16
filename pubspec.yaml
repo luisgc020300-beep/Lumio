@@ -81,6 +81,8 @@ flutter:
   assets:
     - assets/icon/
     - assets/lecciones/lavadora_entender/
+    - assets/lecciones/radiador_entender/
+    - assets/lecciones/grifo_entender/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

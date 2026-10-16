@@ -1,6 +1,7 @@
 // lib/screens/explorar_tab.dart
 import 'package:flutter/material.dart';
 
+import '../data/busqueda_lecciones.dart';
 import '../data/catalogo_lecciones.dart';
 import '../models/electrodomestico.dart';
 import '../theme/categoria_estilos.dart';
@@ -16,14 +17,32 @@ class ExplorarTab extends StatefulWidget {
 }
 
 class _ExplorarTabState extends State<ExplorarTab> {
+  final _controladorBusqueda = TextEditingController();
   String _busqueda = '';
   CategoriaElectrodomestico? _categoria;
+
+  @override
+  void dispose() {
+    _controladorBusqueda.dispose();
+    super.dispose();
+  }
+
+  void _elegirCategoriaDesdeSugerencia(CategoriaElectrodomestico c) {
+    _controladorBusqueda.clear();
+    setState(() {
+      _categoria = c;
+      _busqueda = '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     var lecciones = catalogoLecciones;
     if (_categoria != null) lecciones = lecciones.where((l) => l.categoria == _categoria).toList();
-    if (_busqueda.isNotEmpty) lecciones = lecciones.where((l) => l.titulo.toLowerCase().contains(_busqueda.toLowerCase())).toList();
+    if (_busqueda.isNotEmpty) {
+      final busquedaNormalizada = normalizarBusqueda(_busqueda);
+      lecciones = lecciones.where((l) => leccionCoincideConBusqueda(l, busquedaNormalizada)).toList();
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Explorar')),
@@ -33,6 +52,7 @@ class _ExplorarTabState extends State<ExplorarTab> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              controller: _controladorBusqueda,
               decoration: const InputDecoration(hintText: 'Buscar una lección...', prefixIcon: Icon(Icons.search)),
               onChanged: (v) => setState(() => _busqueda = v),
             ),
@@ -68,7 +88,28 @@ class _ExplorarTabState extends State<ExplorarTab> {
             ],
             Expanded(
               child: lecciones.isEmpty
-                  ? const EmptyState(icon: Icons.menu_book_outlined, title: 'Sin resultados', description: 'Prueba a cambiar la categoría o la búsqueda.')
+                  ? EmptyState(
+                      icon: Icons.menu_book_outlined,
+                      title: 'Sin resultados',
+                      description: _busqueda.isEmpty
+                          ? 'Prueba a cambiar la categoría.'
+                          : 'Todavía no tenemos una lección sobre "$_busqueda". Prueba con alguna de estas categorías:',
+                      action: _busqueda.isEmpty
+                          ? null
+                          : Wrap(
+                              spacing: LumioSpace.s2,
+                              runSpacing: LumioSpace.s2,
+                              alignment: WrapAlignment.center,
+                              children: CategoriaElectrodomestico.values
+                                  .where((c) => c != CategoriaElectrodomestico.otro)
+                                  .map((c) => ActionChip(
+                                        avatar: Icon(iconoCategoria(c.icono), size: 16, color: colorCategoria(context, c)),
+                                        label: Text(c.etiqueta),
+                                        onPressed: () => _elegirCategoriaDesdeSugerencia(c),
+                                      ))
+                                  .toList(),
+                            ),
+                    )
                   : ListView.builder(
                       itemCount: lecciones.length,
                       itemBuilder: (context, i) {

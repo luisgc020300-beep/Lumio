@@ -56,6 +56,7 @@ class Leccion {
     required this.nivel,
     required this.pasos,
     this.applianceEspecifico = false,
+    this.palabrasClave = const [],
   });
 
   final String id;
@@ -64,6 +65,11 @@ class Leccion {
   final String objetivo;
   final String nivel; // principiante | con_base | avanzado
   final List<PasoLeccion> pasos;
+  /// Sinónimos/variantes habituales del aparato (p. ej. "nevera",
+  /// "refrigerador" para frigorífico) -- usado por la búsqueda de
+  /// Explorar para que no dependa solo de que el título literal
+  /// contenga la palabra buscada. Ver lib/data/busqueda_lecciones.dart.
+  final List<String> palabrasClave;
   /// true si requiere un electrodoméstico concreto guardado (no aplica a
   /// lecciones generales de categoría).
   final bool applianceEspecifico;

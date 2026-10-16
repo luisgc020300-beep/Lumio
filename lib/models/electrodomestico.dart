@@ -8,6 +8,8 @@ enum CategoriaElectrodomestico {
   hornoPlaca,
   aireAcondicionado,
   pequenoElectrodomestico,
+  radiador,
+  grifo,
   otro;
 
   String get valor => switch (this) {
@@ -28,6 +30,8 @@ enum CategoriaElectrodomestico {
         CategoriaElectrodomestico.hornoPlaca => 'Hornos y placas',
         CategoriaElectrodomestico.aireAcondicionado => 'Aire acondicionado',
         CategoriaElectrodomestico.pequenoElectrodomestico => 'Pequeños electrodomésticos',
+        CategoriaElectrodomestico.radiador => 'Radiadores',
+        CategoriaElectrodomestico.grifo => 'Grifos',
         CategoriaElectrodomestico.otro => 'Otros',
       };
 
@@ -38,6 +42,8 @@ enum CategoriaElectrodomestico {
         CategoriaElectrodomestico.hornoPlaca => IconIdentificador.horno,
         CategoriaElectrodomestico.aireAcondicionado => IconIdentificador.aire,
         CategoriaElectrodomestico.pequenoElectrodomestico => IconIdentificador.pequeno,
+        CategoriaElectrodomestico.radiador => IconIdentificador.radiador,
+        CategoriaElectrodomestico.grifo => IconIdentificador.grifo,
         CategoriaElectrodomestico.otro => IconIdentificador.otro,
       };
 }
@@ -45,7 +51,7 @@ enum CategoriaElectrodomestico {
 /// Identificador neutro (no depende de Material Icons) para que el icono
 /// real se resuelva en la capa de UI -- mantiene el modelo libre de
 /// dependencias de Flutter.
-enum IconIdentificador { lavadora, lavavajillas, frigorifico, horno, aire, pequeno, otro }
+enum IconIdentificador { lavadora, lavavajillas, frigorifico, horno, aire, pequeno, radiador, grifo, otro }
 
 enum EstadoIdentificacion {
   sinIdentificar,
