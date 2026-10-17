@@ -37,15 +37,31 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: '¿Para qué sirve el filtro?',
-        opciones: [
-          'Para que la ropa salga perfumada',
-          'Atrapa pelusa y objetos pequeños para que no lleguen a la bomba de desagüe',
-          'Calienta el agua antes del lavado',
-          'Dosifica el detergente automáticamente',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: '¿Para qué sirve el filtro?',
+            opciones: [
+              'Para que la ropa salga perfumada',
+              'Atrapa pelusa y objetos pequeños para que no lleguen a la bomba de desagüe',
+              'Calienta el agua antes del lavado',
+              'Dosifica el detergente automáticamente',
+            ],
+            respuestaCorrecta: 1,
+            explicacion: 'Por eso hay que limpiarlo de vez en cuando: si se atasca, el agua no desagua bien o la bomba puede dañarse.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Para qué sirve el cajetín de detergente?',
+            opciones: [
+              'Añade el jabón y el suavizante en el momento adecuado del ciclo',
+              'Filtra el agua antes de entrar al tambor',
+              'Controla la temperatura del agua',
+              'Hace girar el tambor',
+            ],
+            respuestaCorrecta: 0,
+            explicacion: 'No todo el detergente entra a la vez: el cajetín libera cada producto cuando le toca dentro del ciclo.',
+          ),
         ],
-        respuestaCorrecta: 1,
-        porQueImporta: 'Por eso hay que limpiarlo de vez en cuando: si se atasca, el agua no desagua bien o la bomba puede dañarse.',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -82,10 +98,21 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: '¿Qué programa es más adecuado para una camiseta con un estampado delicado?',
-        opciones: ['Algodón 40°C', 'Ropa delicada', 'El programa más largo que tenga la lavadora', 'Cualquiera, da igual'],
-        respuestaCorrecta: 1,
-        porQueImporta: 'El programa delicado usa agua más fría y un movimiento más suave del tambor, para no dañar el estampado ni la tela.',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: '¿Qué programa es más adecuado para una camiseta con un estampado delicado?',
+            opciones: ['Algodón 40°C', 'Ropa delicada', 'El programa más largo que tenga la lavadora', 'Cualquiera, da igual'],
+            respuestaCorrecta: 1,
+            explicacion: 'El programa delicado usa agua más fría y un movimiento más suave del tambor, para no dañar el estampado ni la tela.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Para qué tipo de ropa es más adecuado el programa Algodón 40°C?',
+            opciones: ['Ropa de uso diario como camisetas o toallas finas', 'Solo prendas delicadas', 'Solo ropa muy sucia de trabajo', 'Edredones y mantas gruesas'],
+            respuestaCorrecta: 0,
+            explicacion: 'Es el equilibrio entre limpieza y cuidado del tejido para la ropa normal de cada día.',
+          ),
+        ],
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -122,10 +149,21 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: '¿Por qué no conviene guardar la leche o los huevos en los huecos de la puerta?',
-        opciones: ['Porque no caben bien', 'Porque es la zona más cálida y con más variación de temperatura', 'Porque ahí hace más frío que en el resto', 'Da igual, es solo cuestión de espacio'],
-        respuestaCorrecta: 1,
-        porQueImporta: 'La puerta se abre constantemente, así que es la zona menos estable en temperatura -- mejor para salsas o bebidas que no necesiten tanto frío constante.',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: '¿Por qué no conviene guardar la leche o los huevos en los huecos de la puerta?',
+            opciones: ['Porque no caben bien', 'Porque es la zona más cálida y con más variación de temperatura', 'Porque ahí hace más frío que en el resto', 'Da igual, es solo cuestión de espacio'],
+            respuestaCorrecta: 1,
+            explicacion: 'La puerta se abre constantemente, así que es la zona menos estable en temperatura -- mejor para salsas o bebidas que no necesiten tanto frío constante.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Cómo consigue frío un frigorífico?',
+            opciones: ['Genera frío directamente con una resistencia', 'Mueve el calor de dentro hacia fuera con un gas refrigerante y un compresor', 'Enfría el aire con hielo interno', 'No necesita electricidad para enfriar'],
+            respuestaCorrecta: 1,
+            explicacion: 'No "crea" frío: saca el calor de dentro hacia fuera, el mismo principio que usa el aire acondicionado.',
+          ),
+        ],
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -162,10 +200,21 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: 'Si una receta tradicional pide 200°C y vas a cocinarla en modo aire/ventilador, ¿qué deberías hacer con la temperatura?',
-        opciones: ['Subirla unos 15-20°C', 'Bajarla unos 15-20°C', 'Dejarla igual', 'Duplicarla'],
-        respuestaCorrecta: 1,
-        porQueImporta: 'El aire en movimiento cocina de forma más eficiente, así que si no bajas la temperatura es fácil que algo se queme por fuera.',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: 'Si una receta tradicional pide 200°C y vas a cocinarla en modo aire/ventilador, ¿qué deberías hacer con la temperatura?',
+            opciones: ['Subirla unos 15-20°C', 'Bajarla unos 15-20°C', 'Dejarla igual', 'Duplicarla'],
+            respuestaCorrecta: 1,
+            explicacion: 'El aire en movimiento cocina de forma más eficiente, así que si no bajas la temperatura es fácil que algo se queme por fuera.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Qué modo usarías para gratinar y dorar la parte de arriba de un plato?',
+            opciones: ['Calor arriba y abajo', 'Grill', 'Aire/ventilador', 'Ninguno, hay que hacerlo en el microondas'],
+            respuestaCorrecta: 1,
+            explicacion: 'El grill calienta solo desde arriba y con fuerza, justo lo que hace falta para gratinar.',
+          ),
+        ],
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -202,10 +251,21 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: 'Si notas que el aire acondicionado enfría menos que antes, ¿qué deberías revisar primero?',
-        opciones: ['El filtro, por si está sucio', 'El mando a distancia', 'La unidad exterior al completo', 'El color de la luz indicadora'],
-        respuestaCorrecta: 0,
-        porQueImporta: 'Un filtro sucio es la causa más habitual de que un aire acondicionado "enfríe poco" sin estar realmente averiado.',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: 'Si notas que el aire acondicionado enfría menos que antes, ¿qué deberías revisar primero?',
+            opciones: ['El filtro, por si está sucio', 'El mando a distancia', 'La unidad exterior al completo', 'El color de la luz indicadora'],
+            respuestaCorrecta: 0,
+            explicacion: 'Un filtro sucio es la causa más habitual de que un aire acondicionado "enfríe poco" sin estar realmente averiado.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Cómo enfría una habitación el aire acondicionado en modo frío?',
+            opciones: ['Genera frío y lo expulsa al aire', 'Mueve el calor de dentro hacia fuera, igual que un frigorífico', 'Congela el aire con hielo', 'Solo mueve el aire sin cambiar su temperatura'],
+            respuestaCorrecta: 1,
+            explicacion: 'Es el mismo principio que un frigorífico: mueve el calor de dentro hacia fuera con un gas refrigerante.',
+          ),
+        ],
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -242,10 +302,21 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: '¿Por qué no debes sumergir la base de una batidora en agua, aunque sí puedas lavar el vaso?',
-        opciones: ['Porque se puede oxidar el plástico', 'Porque la base contiene el motor y las conexiones eléctricas', 'Porque pierde la garantía', 'No hay ningún problema en hacerlo'],
-        respuestaCorrecta: 1,
-        porQueImporta: 'Mojar el motor o las conexiones eléctricas puede estropear el aparato o ser peligroso -- solo las partes extraíbles (vaso, cuchillas) suelen poder lavarse con agua.',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: '¿Por qué no debes sumergir la base de una batidora en agua, aunque sí puedas lavar el vaso?',
+            opciones: ['Porque se puede oxidar el plástico', 'Porque la base contiene el motor y las conexiones eléctricas', 'Porque pierde la garantía', 'No hay ningún problema en hacerlo'],
+            respuestaCorrecta: 1,
+            explicacion: 'Mojar el motor o las conexiones eléctricas puede estropear el aparato o ser peligroso -- solo las partes extraíbles (vaso, cuchillas) suelen poder lavarse con agua.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Qué evita hacer un ciclo de descalcificación de vez en cuando en cafeteras y hervidores?',
+            opciones: ['Que pierdan rendimiento o se averíen por la cal acumulada', 'Que se manchen por fuera', 'Que se queden sin agua', 'Que cambien de color'],
+            respuestaCorrecta: 0,
+            explicacion: 'La cal se acumula por dentro con el uso -- descalcificar de vez en cuando evita que el aparato pierda rendimiento o se averíe antes de tiempo.',
+          ),
+        ],
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -276,10 +347,21 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: '¿Qué pasa si no rellenas el depósito de abrillantador?',
-        opciones: ['El lavavajillas no se enciende', 'La vajilla puede secar con gotas o marcas de agua visibles', 'El detergente deja de funcionar', 'No pasa nada, no influye en el resultado'],
-        respuestaCorrecta: 1,
-        porQueImporta: 'El abrillantador ayuda a que el agua se escurra bien de la vajilla en vez de quedarse en gotas -- sin él, puede quedar limpia pero con marcas.',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: '¿Qué pasa si no rellenas el depósito de abrillantador?',
+            opciones: ['El lavavajillas no se enciende', 'La vajilla puede secar con gotas o marcas de agua visibles', 'El detergente deja de funcionar', 'No pasa nada, no influye en el resultado'],
+            respuestaCorrecta: 1,
+            explicacion: 'El abrillantador ayuda a que el agua se escurra bien de la vajilla en vez de quedarse en gotas -- sin él, puede quedar limpia pero con marcas.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Para qué sirve el depósito de sal del lavavajillas?',
+            opciones: ['Ablanda el agua para que el detergente funcione mejor', 'Da sabor a la vajilla', 'Sustituye al detergente', 'Limpia el filtro automáticamente'],
+            respuestaCorrecta: 0,
+            explicacion: 'El agua dura hace que el detergente funcione peor -- la sal la ablanda para que la vajilla quede mejor lavada.',
+          ),
+        ],
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -321,15 +403,26 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: 'Tu radiador calienta frío por arriba pero caliente por abajo. ¿Qué es lo más probable?',
-        opciones: [
-          'Que tiene aire dentro y conviene purgarlo',
-          'Que está estropeado y hay que cambiarlo',
-          'Que la válvula está mal instalada',
-          'Es normal, todos los radiadores funcionan así',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: 'Tu radiador calienta frío por arriba pero caliente por abajo. ¿Qué es lo más probable?',
+            opciones: [
+              'Que tiene aire dentro y conviene purgarlo',
+              'Que está estropeado y hay que cambiarlo',
+              'Que la válvula está mal instalada',
+              'Es normal, todos los radiadores funcionan así',
+            ],
+            respuestaCorrecta: 0,
+            explicacion: 'El aire acumulado sube a la parte de arriba e impide que el agua caliente llegue bien -- purgarlo (soltar ese aire con la llave del purgador) suele arreglarlo.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Qué necesita un radiador de agua caliente para funcionar que uno eléctrico no?',
+            opciones: ['Una caldera central conectada por tuberías', 'Electricidad', 'Un mando a distancia', 'Una válvula'],
+            respuestaCorrecta: 0,
+            explicacion: 'El de agua caliente recibe el agua ya calentada por una caldera central; el eléctrico calienta él mismo una resistencia interna, sin necesitar caldera ni tuberías.',
+          ),
         ],
-        respuestaCorrecta: 0,
-        porQueImporta: 'El aire acumulado sube a la parte de arriba e impide que el agua caliente llegue bien -- purgarlo (soltar ese aire con la llave del purgador) suele arreglarlo.',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,
@@ -371,15 +464,26 @@ final List<Leccion> catalogoLecciones = [
       PasoLeccion(
         tipo: TipoPasoLeccion.comprobacion,
         titulo: 'Comprueba lo que has aprendido',
-        cuerpo: 'Tu grifo gotea aunque lo cierres del todo. ¿Cuál es la causa más probable?',
-        opciones: [
-          'La tubería del edificio está rota',
-          'La pieza interior (cartucho o válvula) ya no sella bien',
-          'El agua del grifo está contaminada',
-          'Es normal en todos los grifos y no indica nada',
+        cuerpo: 'Dos preguntas rápidas sobre lo que acabas de ver.',
+        preguntas: [
+          PreguntaQuiz(
+            pregunta: 'Tu grifo gotea aunque lo cierres del todo. ¿Cuál es la causa más probable?',
+            opciones: [
+              'La tubería del edificio está rota',
+              'La pieza interior (cartucho o válvula) ya no sella bien',
+              'El agua del grifo está contaminada',
+              'Es normal en todos los grifos y no indica nada',
+            ],
+            respuestaCorrecta: 1,
+            explicacion: 'Esa pieza es la que bloquea el paso del agua al cerrar -- cuando se desgasta, deja pasar un goteo aunque el mando esté cerrado del todo.',
+          ),
+          PreguntaQuiz(
+            pregunta: '¿Qué es una forma sencilla de ahorrar agua con el grifo en el día a día?',
+            opciones: ['Cerrarlo mientras enjabonas o te cepillas los dientes', 'Dejarlo siempre a máxima presión', 'Usar solo agua caliente', 'Abrirlo del todo nada más empezar'],
+            respuestaCorrecta: 0,
+            explicacion: 'Cerrar el grifo mientras no lo necesitas directamente (enjabonando, cepillándote los dientes) ahorra bastante agua a lo largo del día.',
+          ),
         ],
-        respuestaCorrecta: 1,
-        porQueImporta: 'Esa pieza es la que bloquea el paso del agua al cerrar -- cuando se desgasta, deja pasar un goteo aunque el mando esté cerrado del todo.',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.resumen,

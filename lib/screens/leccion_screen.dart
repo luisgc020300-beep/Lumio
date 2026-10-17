@@ -21,16 +21,17 @@ class LeccionScreen extends StatefulWidget {
 class _LeccionScreenState extends State<LeccionScreen> {
   late int _paso = widget.pasoInicial.clamp(0, widget.leccion.pasos.length - 1);
   bool _avanzando = false;
-  /// Opción elegida en el paso de comprobación actual -- se reinicia al
-  /// avanzar de paso. Vive aquí (no en un widget hijo) porque es el estado
-  /// más simple posible para un quiz de un único paso visible a la vez.
-  int? _seleccionQuiz;
+  /// true cuando el bloque de comprobación del paso actual (todas sus
+  /// preguntas, incluido el repaso de las falladas) ya se completó --
+  /// lo informa `_ComprobacionMultiple` vía callback. Se reinicia al
+  /// avanzar de paso.
+  bool _comprobacionCompleta = false;
 
   bool get _esUltimo => _paso == widget.leccion.pasos.length - 1;
 
   bool get _quizSinResponder {
     final paso = widget.leccion.pasos[_paso];
-    return paso.opciones != null && _seleccionQuiz == null;
+    return paso.preguntas != null && !_comprobacionCompleta;
   }
 
   /// El profesor virtual acompaña TODOS los pasos, no solo bienvenida/
@@ -38,17 +39,10 @@ class _LeccionScreenState extends State<LeccionScreen> {
   /// a mitad de camino. Cuando el paso ya tiene `porQueImporta` escrito,
   /// el profesor dice exactamente ese texto (sustituye al recuadro suelto
   /// que había antes); si no, un comentario breve de transición fijo, sin
-  /// inventar contenido educativo nuevo.
+  /// inventar contenido educativo nuevo. Los pasos de comprobación llevan
+  /// su propio profesor dentro de `_ComprobacionMultiple` (necesita el
+  /// estado fino de pregunta actual), así que no se gestionan aquí.
   ({PoseProfesor pose, String mensaje}) _contextoProfesor(PasoLeccion paso) {
-    if (paso.tipo == TipoPasoLeccion.comprobacion && paso.opciones != null) {
-      if (_seleccionQuiz == null) {
-        return (pose: PoseProfesor.saludo, mensaje: pistaComprobacion(widget.leccion.id));
-      }
-      final acerto = _seleccionQuiz == paso.respuestaCorrecta;
-      return acerto
-          ? (pose: PoseProfesor.celebrando, mensaje: feedbackCorrecto(widget.leccion.id))
-          : (pose: PoseProfesor.animando, mensaje: feedbackIncorrecto(widget.leccion.id));
-    }
     if (paso.tipo == TipoPasoLeccion.resumen) {
       return (pose: PoseProfesor.celebrando, mensaje: cierreLeccion(widget.leccion.id));
     }
@@ -61,11 +55,10 @@ class _LeccionScreenState extends State<LeccionScreen> {
     return (pose: PoseProfesor.saludo, mensaje: comentarioTransicion(widget.leccion.id, _paso));
   }
 
-  /// true si el profesor va antes del cuerpo del paso (bienvenida, pista
-  /// de comprobación, cierre -- casos donde abre el paso) en vez de
-  /// después (comentario ligado a lo que se acaba de leer).
-  bool _profesorVaAntesDelCuerpo(PasoLeccion paso) =>
-      (paso.tipo == TipoPasoLeccion.comprobacion && paso.opciones != null) || paso.tipo == TipoPasoLeccion.resumen || _paso == 0;
+  /// true si el profesor va antes del cuerpo del paso (bienvenida, cierre
+  /// -- casos donde abre el paso) en vez de después (comentario ligado a
+  /// lo que se acaba de leer).
+  bool _profesorVaAntesDelCuerpo(PasoLeccion paso) => paso.tipo == TipoPasoLeccion.resumen || _paso == 0;
 
   Future<void> _siguiente() async {
     setState(() => _avanzando = true);
@@ -79,7 +72,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
       if (mounted) {
         setState(() {
           _paso += 1;
-          _seleccionQuiz = null;
+          _comprobacionCompleta = false;
         });
       }
     } catch (e, st) {
@@ -162,14 +155,13 @@ class _LeccionScreenState extends State<LeccionScreen> {
                 ],
                 const SizedBox(height: LumioSpace.s4),
                 Text(paso.cuerpo, style: const TextStyle(fontSize: 15, height: 1.4)),
-                if (paso.opciones != null) ...[
+                if (paso.preguntas != null) ...[
                   const SizedBox(height: LumioSpace.s4),
-                  _Comprobacion(
-                    opciones: paso.opciones!,
-                    correcta: paso.respuestaCorrecta!,
-                    explicacion: paso.porQueImporta,
-                    seleccion: _seleccionQuiz,
-                    onSeleccionar: (i) => setState(() => _seleccionQuiz = i),
+                  _ComprobacionMultiple(
+                    key: ValueKey('${widget.leccion.id}-comprobacion-$_paso'),
+                    leccionId: widget.leccion.id,
+                    preguntas: paso.preguntas!,
+                    onCompletado: () => setState(() => _comprobacionCompleta = true),
                   ),
                 ] else if (!profesorAntes) ...[
                   const SizedBox(height: LumioSpace.s4),
@@ -227,42 +219,109 @@ class _IlustracionPaso extends StatelessWidget {
   }
 }
 
-/// Comprobación interactiva real: selección inmediata = feedback inmediato,
-/// sin botón "Comprobar" aparte -- un único control de acción por pantalla,
-/// igual que el resto de Lumio. Una respuesta incorrecta no bloquea seguir
-/// probando otras opciones.
-class _Comprobacion extends StatelessWidget {
-  const _Comprobacion({
-    required this.opciones,
-    required this.correcta,
-    required this.explicacion,
-    required this.seleccion,
-    required this.onSeleccionar,
-  });
+/// Comprobación con varias preguntas: selección inmediata = feedback
+/// inmediato (un único control de acción por pantalla, igual criterio que
+/// el resto de Lumio), pero una vez respondida una pregunta queda fijada
+/// -- no se puede cambiar en el momento. Si se falla en el primer
+/// intento, esa pregunta se vuelve a hacer al final, después de las
+/// demás (una sola vuelta de repaso, no un bucle hasta acertar).
+class _ComprobacionMultiple extends StatefulWidget {
+  const _ComprobacionMultiple({required this.leccionId, required this.preguntas, required this.onCompletado, super.key});
+  final String leccionId;
+  final List<PreguntaQuiz> preguntas;
+  final VoidCallback onCompletado;
 
-  final List<String> opciones;
-  final int correcta;
-  final String? explicacion;
-  final int? seleccion;
-  final ValueChanged<int> onSeleccionar;
+  @override
+  State<_ComprobacionMultiple> createState() => _ComprobacionMultipleState();
+}
+
+class _ComprobacionMultipleState extends State<_ComprobacionMultiple> {
+  late List<PreguntaQuiz> _cola = List.of(widget.preguntas);
+  final List<PreguntaQuiz> _falladasPrimerIntento = [];
+  bool _enRepaso = false;
+  bool _terminado = false;
+  int? _seleccion;
+  int _numeroPregunta = 1;
+  int _aciertosPrimerIntento = 0;
+
+  void _seleccionar(int i) {
+    if (_seleccion != null) return; // ya respondida -- se fija hasta "Siguiente pregunta"
+    setState(() {
+      _seleccion = i;
+      if (!_enRepaso) {
+        if (i == _cola.first.respuestaCorrecta) {
+          _aciertosPrimerIntento++;
+        } else {
+          _falladasPrimerIntento.add(_cola.first);
+        }
+      }
+    });
+  }
+
+  void _siguientePregunta() {
+    setState(() {
+      _cola.removeAt(0);
+      _seleccion = null;
+      if (_cola.isNotEmpty) {
+        _numeroPregunta++;
+        return;
+      }
+      if (!_enRepaso && _falladasPrimerIntento.isNotEmpty) {
+        _cola = List.of(_falladasPrimerIntento);
+        _falladasPrimerIntento.clear();
+        _enRepaso = true;
+        _numeroPregunta = 1;
+      } else {
+        _terminado = true;
+        widget.onCompletado();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final respondido = seleccion != null;
-    final acerto = seleccion == correcta;
+    if (_terminado) {
+      final perfecto = _aciertosPrimerIntento == widget.preguntas.length;
+      final mensaje = perfecto
+          ? '¡Las acertaste todas a la primera!'
+          : '$_aciertosPrimerIntento de ${widget.preguntas.length} a la primera -- el resto ya las has repasado.';
+      return ProfesorLumio(pose: PoseProfesor.celebrando, mensaje: mensaje);
+    }
+
+    final pregunta = _cola.first;
+    final respondido = _seleccion != null;
+    final acerto = _seleccion == pregunta.respuestaCorrecta;
+
+    final ({PoseProfesor pose, String mensaje}) contexto;
+    if (!respondido) {
+      contexto = (pose: PoseProfesor.saludo, mensaje: pistaComprobacion(widget.leccionId));
+    } else if (acerto) {
+      contexto = (pose: PoseProfesor.celebrando, mensaje: feedbackCorrecto(widget.leccionId));
+    } else {
+      contexto = (pose: PoseProfesor.animando, mensaje: feedbackIncorrecto(widget.leccionId));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var i = 0; i < opciones.length; i++) ...[
+        ProfesorLumio(pose: contexto.pose, mensaje: contexto.mensaje),
+        const SizedBox(height: LumioSpace.s3),
+        Text(
+          _enRepaso ? 'Repasemos esta' : 'Pregunta $_numeroPregunta de ${widget.preguntas.length}',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: context.colors.brand),
+        ),
+        const SizedBox(height: LumioSpace.s2),
+        Text(pregunta.pregunta, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        const SizedBox(height: LumioSpace.s3),
+        for (var i = 0; i < pregunta.opciones.length; i++) ...[
           _OpcionQuiz(
-            texto: opciones[i],
-            esCorrecta: i == correcta,
-            esSeleccionada: i == seleccion,
+            texto: pregunta.opciones[i],
+            esCorrecta: i == pregunta.respuestaCorrecta,
+            esSeleccionada: i == _seleccion,
             mostrarResultado: respondido,
-            onTap: () => onSeleccionar(i),
+            onTap: () => _seleccionar(i),
           ),
-          if (i != opciones.length - 1) const SizedBox(height: LumioSpace.s2),
+          if (i != pregunta.opciones.length - 1) const SizedBox(height: LumioSpace.s2),
         ],
         if (respondido) ...[
           const SizedBox(height: LumioSpace.s4),
@@ -277,14 +336,14 @@ class _Comprobacion extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  acerto
-                      ? (explicacion ?? '¡Correcto!')
-                      : 'Esa no es. ${explicacion != null ? explicacion! : "Prueba con otra opción."}',
+                  acerto ? (pregunta.explicacion ?? '¡Correcto!') : 'Esa no es. ${pregunta.explicacion ?? "Prueba con otra opción la próxima vez."}',
                   style: TextStyle(fontSize: 13, color: acerto ? context.colors.ink : context.colors.errorText),
                 ),
               ),
             ]),
           ),
+          const SizedBox(height: LumioSpace.s3),
+          SizedBox(width: double.infinity, child: OutlinedButton(onPressed: _siguientePregunta, child: const Text('Siguiente pregunta'))),
         ],
       ],
     );

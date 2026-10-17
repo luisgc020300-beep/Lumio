@@ -22,13 +22,16 @@ void main() {
     }
   });
 
-  test('todo paso de comprobación con opciones tiene una respuesta correcta válida', () {
+  test('todo paso de comprobación tiene al menos 2 preguntas, cada una con respuesta correcta válida', () {
     for (final l in catalogoLecciones) {
       for (final p in l.pasos.where((p) => p.tipo == TipoPasoLeccion.comprobacion)) {
-        if (p.opciones == null) continue; // variante antigua de solo texto, todavía permitida
-        expect(p.opciones!.length, greaterThanOrEqualTo(2), reason: '"${l.id}": menos de 2 opciones');
-        expect(p.respuestaCorrecta, isNotNull, reason: '"${l.id}": opciones sin respuestaCorrecta');
-        expect(p.respuestaCorrecta!, inInclusiveRange(0, p.opciones!.length - 1), reason: '"${l.id}": respuestaCorrecta fuera de rango');
+        expect(p.preguntas, isNotNull, reason: '"${l.id}": paso de comprobación sin preguntas');
+        expect(p.preguntas!.length, greaterThanOrEqualTo(2), reason: '"${l.id}": menos de 2 preguntas');
+        for (final pregunta in p.preguntas!) {
+          expect(pregunta.opciones.length, greaterThanOrEqualTo(2), reason: '"${l.id}": menos de 2 opciones en "${pregunta.pregunta}"');
+          expect(pregunta.respuestaCorrecta, inInclusiveRange(0, pregunta.opciones.length - 1),
+              reason: '"${l.id}": respuestaCorrecta fuera de rango en "${pregunta.pregunta}"');
+        }
       }
     }
   });
@@ -48,8 +51,8 @@ void main() {
     final grifo = leccionPorId('grifo_entender');
     expect(radiador, isNotNull);
     expect(grifo, isNotNull);
-    expect(radiador!.pasos.any((p) => p.tipo == TipoPasoLeccion.comprobacion && p.opciones != null), isTrue);
-    expect(grifo!.pasos.any((p) => p.tipo == TipoPasoLeccion.comprobacion && p.opciones != null), isTrue);
+    expect(radiador!.pasos.any((p) => p.tipo == TipoPasoLeccion.comprobacion && p.preguntas != null), isTrue);
+    expect(grifo!.pasos.any((p) => p.tipo == TipoPasoLeccion.comprobacion && p.preguntas != null), isTrue);
     expect(radiador.pasos.any((p) => p.imagenAsset != null), isTrue);
     expect(grifo.pasos.any((p) => p.imagenAsset != null), isTrue);
   });

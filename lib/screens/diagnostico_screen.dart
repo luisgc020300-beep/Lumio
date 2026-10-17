@@ -201,32 +201,53 @@ class _Burbuja extends StatelessWidget {
   Widget build(BuildContext context) {
     final esUsuario = mensaje.rol == 'user';
     final esAviso = mensaje.esAvisoSeguridad;
+    final burbuja = Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * (esUsuario ? 0.82 : 0.74)),
+      decoration: BoxDecoration(
+        color: esAviso ? context.colors.error.withValues(alpha: 0.15) : (esUsuario ? context.colors.brand : context.colors.surfaceMuted),
+        borderRadius: BorderRadius.circular(LumioRadius.md),
+        border: esAviso ? Border.all(color: context.colors.error) : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (esAviso)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.warning_amber_outlined, size: 16, color: context.colors.errorText),
+                const SizedBox(width: 4),
+                Text('Aviso de seguridad', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.errorText)),
+              ]),
+            ),
+          Text(mensaje.contenido, style: TextStyle(color: esAviso ? context.colors.errorText : (esUsuario ? context.colors.brandOn : context.colors.ink))),
+        ],
+      ),
+    );
+
+    if (esUsuario) {
+      return Align(alignment: Alignment.centerRight, child: burbuja);
+    }
+    // Los mensajes del asistente llevan el avatar del profesor virtual --
+    // mismo personaje en todas las pantallas, para que esto no se sienta
+    // como el chat genérico de una IA cualquiera.
     return Align(
-      alignment: esUsuario ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.all(12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
-        decoration: BoxDecoration(
-          color: esAviso ? context.colors.error.withValues(alpha: 0.15) : (esUsuario ? context.colors.brand : context.colors.surfaceMuted),
-          borderRadius: BorderRadius.circular(LumioRadius.md),
-          border: esAviso ? Border.all(color: context.colors.error) : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (esAviso)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.warning_amber_outlined, size: 16, color: context.colors.errorText),
-                  const SizedBox(width: 4),
-                  Text('Aviso de seguridad', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.errorText)),
-                ]),
-              ),
-            Text(mensaje.contenido, style: TextStyle(color: esAviso ? context.colors.errorText : (esUsuario ? context.colors.brandOn : context.colors.ink))),
-          ],
-        ),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: ExcludeSemantics(
+              child: ClipRRect(borderRadius: BorderRadius.circular(LumioRadius.pill), child: Image.asset('assets/profesor/saludo.webp', width: 28, height: 28)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(child: burbuja),
+        ],
       ),
     );
   }

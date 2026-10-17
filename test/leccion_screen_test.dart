@@ -23,6 +23,18 @@ Widget _envolver(Widget child) => MaterialApp(theme: buildLumioLightTheme(), hom
 
 FilledButton _botonPrincipal(WidgetTester tester) => tester.widget<FilledButton>(find.byType(FilledButton));
 
+Future<void> _responderYContinuar(WidgetTester tester, String opcion) async {
+  await tester.ensureVisible(find.text(opcion));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(opcion));
+  await tester.pump();
+  final botonSiguientePregunta = find.text('Siguiente pregunta');
+  await tester.ensureVisible(botonSiguientePregunta);
+  await tester.pumpAndSettle();
+  await tester.tap(botonSiguientePregunta);
+  await tester.pump();
+}
+
 class _SinkDeAnalyticaFalso implements AnalyticsSink {
   @override
   Future<void> logEvent({required String name, Map<String, Object>? parameters}) async {}
@@ -35,10 +47,12 @@ void main() {
       expect(leccion.pasos.length, 5);
 
       final comprobacion = leccion.pasos.firstWhere((p) => p.tipo == TipoPasoLeccion.comprobacion);
-      expect(comprobacion.opciones, isNotNull);
-      expect(comprobacion.opciones!.length, greaterThanOrEqualTo(2));
-      expect(comprobacion.respuestaCorrecta, isNotNull);
-      expect(comprobacion.respuestaCorrecta!, inInclusiveRange(0, comprobacion.opciones!.length - 1));
+      expect(comprobacion.preguntas, isNotNull);
+      expect(comprobacion.preguntas!.length, greaterThanOrEqualTo(2));
+      for (final pregunta in comprobacion.preguntas!) {
+        expect(pregunta.opciones.length, greaterThanOrEqualTo(2));
+        expect(pregunta.respuestaCorrecta, inInclusiveRange(0, pregunta.opciones.length - 1));
+      }
     });
   });
 
@@ -124,26 +138,33 @@ void main() {
         PasoLeccion(
           tipo: TipoPasoLeccion.comprobacion,
           titulo: 'Comprueba',
-          cuerpo: '¿Cuál es la correcta?',
-          opciones: ['Incorrecta A', 'Correcta', 'Incorrecta B'],
-          respuestaCorrecta: 1,
-          porQueImporta: 'Explicación de la respuesta correcta.',
+          cuerpo: 'Dos preguntas rápidas.',
+          preguntas: [
+            PreguntaQuiz(
+              pregunta: '¿Cuál es la correcta?',
+              opciones: ['Incorrecta A', 'Correcta', 'Incorrecta B'],
+              respuestaCorrecta: 1,
+              explicacion: 'Explicación de la respuesta correcta.',
+            ),
+            PreguntaQuiz(pregunta: '¿Y esta otra?', opciones: ['Sí', 'No'], respuestaCorrecta: 0),
+          ],
         ),
         PasoLeccion(tipo: TipoPasoLeccion.resumen, titulo: 'Resumen', cuerpo: 'Fin.'),
       ],
     );
 
-    testWidgets('sin selección, las 3 opciones se muestran y "Siguiente" está deshabilitado', (tester) async {
+    testWidgets('sin responder, se muestran las opciones de la primera pregunta y "Siguiente" está deshabilitado', (tester) async {
       await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: 'test')));
       await tester.pump();
 
       expect(find.text('Incorrecta A'), findsOneWidget);
       expect(find.text('Correcta'), findsOneWidget);
       expect(find.text('Incorrecta B'), findsOneWidget);
+      expect(find.text('Siguiente pregunta'), findsNothing);
       expect(_botonPrincipal(tester).onPressed, isNull);
     });
 
-    testWidgets('seleccionar la opción incorrecta muestra feedback de error y habilita "Siguiente"', (tester) async {
+    testWidgets('seleccionar la opción incorrecta muestra feedback de error y bloquea la selección', (tester) async {
       await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: 'test')));
       await tester.pump();
 
@@ -153,7 +174,16 @@ void main() {
       // Aparece dos veces a propósito: una vez junto a la opción marcada
       // como incorrecta y otra en el banner de feedback.
       expect(find.byIcon(Icons.cancel_outlined), findsWidgets);
-      expect(_botonPrincipal(tester).onPressed, isNotNull);
+      expect(find.text('Siguiente pregunta'), findsOneWidget);
+      // El botón principal sigue deshabilitado: el bloque de comprobación
+      // no se completa hasta responder todas las preguntas (y su repaso).
+      expect(_botonPrincipal(tester).onPressed, isNull);
+
+      // La respuesta queda bloqueada tras el primer intento -- tocar otra
+      // opción no cambia nada.
+      await tester.tap(find.text('Correcta'));
+      await tester.pump();
+      expect(find.byIcon(Icons.cancel_outlined), findsWidgets);
     });
 
     testWidgets('seleccionar la opción correcta muestra feedback de éxito y la explicación', (tester) async {
@@ -167,21 +197,36 @@ void main() {
       // y otra en el banner de feedback.
       expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
       expect(find.text('Explicación de la respuesta correcta.'), findsOneWidget);
-      expect(_botonPrincipal(tester).onPressed, isNotNull);
     });
 
-    testWidgets('tras responder mal, se puede corregir seleccionando otra opción', (tester) async {
+    testWidgets('responder bien ambas preguntas completa el bloque y habilita "Siguiente"', (tester) async {
       await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: 'test')));
       await tester.pump();
 
-      await tester.tap(find.text('Incorrecta B'));
-      await tester.pump();
-      expect(find.byIcon(Icons.cancel_outlined), findsWidgets);
+      await _responderYContinuar(tester, 'Correcta');
+      expect(find.text('¿Y esta otra?'), findsOneWidget);
+      expect(_botonPrincipal(tester).onPressed, isNull);
 
-      await tester.tap(find.text('Correcta'));
+      await _responderYContinuar(tester, 'Sí');
+
+      expect(_botonPrincipal(tester).onPressed, isNotNull);
+    });
+
+    testWidgets('fallar una pregunta hace que se repita al final, antes de completar el bloque', (tester) async {
+      await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: 'test')));
       await tester.pump();
-      expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
-      expect(find.byIcon(Icons.cancel_outlined), findsNothing);
+
+      await _responderYContinuar(tester, 'Incorrecta A'); // falla la 1ª
+      await _responderYContinuar(tester, 'Sí'); // acierta la 2ª
+
+      // Agotadas las 2 originales, toca repasar la que se falló.
+      expect(find.text('Repasemos esta'), findsOneWidget);
+      expect(find.text('¿Cuál es la correcta?'), findsOneWidget);
+      expect(_botonPrincipal(tester).onPressed, isNull);
+
+      await _responderYContinuar(tester, 'Correcta');
+
+      expect(_botonPrincipal(tester).onPressed, isNotNull);
     });
   });
 
@@ -197,9 +242,10 @@ void main() {
         PasoLeccion(
           tipo: TipoPasoLeccion.comprobacion,
           titulo: 'Comprueba',
-          cuerpo: '¿Cuál es la correcta?',
-          opciones: ['Incorrecta', 'Correcta'],
-          respuestaCorrecta: 1,
+          cuerpo: 'Una pregunta rápida.',
+          preguntas: [
+            PreguntaQuiz(pregunta: '¿Cuál es la correcta?', opciones: ['Incorrecta', 'Correcta'], respuestaCorrecta: 1),
+          ],
         ),
         PasoLeccion(tipo: TipoPasoLeccion.resumen, titulo: 'Resumen', cuerpo: 'Fin.'),
       ],
