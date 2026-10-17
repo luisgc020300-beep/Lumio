@@ -15,12 +15,14 @@ void main() {
       expect(feedbackCorrecto(id).trim(), isNotEmpty);
       expect(feedbackIncorrecto(id).trim(), isNotEmpty);
       expect(cierreLeccion(id).trim(), isNotEmpty);
+      expect(comentarioTransicion(id, 2).trim(), isNotEmpty);
     }
   });
 
   test('la rotación es determinista -- el mismo id siempre da el mismo mensaje', () {
     expect(pistaComprobacion('lavadora_entender'), pistaComprobacion('lavadora_entender'));
     expect(feedbackCorrecto('grifo_entender'), feedbackCorrecto('grifo_entender'));
+    expect(comentarioTransicion('radiador_entender', 2), comentarioTransicion('radiador_entender', 2));
   });
 
   test('saludoHome no está vacío', () {

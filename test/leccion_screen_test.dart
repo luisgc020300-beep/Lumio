@@ -263,6 +263,61 @@ void main() {
     });
   });
 
+  group('LeccionScreen -- profesor en pasos intermedios', () {
+    const leccion = Leccion(
+      id: 'profesor-intermedio-test',
+      titulo: 'Lección intermedia',
+      categoria: CategoriaElectrodomestico.lavadoraSecadora,
+      objetivo: 'Probar pasos intermedios',
+      nivel: 'principiante',
+      pasos: [
+        PasoLeccion(tipo: TipoPasoLeccion.explicacion, titulo: 'Intro', cuerpo: 'Cuerpo intro.'),
+        PasoLeccion(tipo: TipoPasoLeccion.explicacion, titulo: 'Con porqué', cuerpo: 'Cuerpo con porqué.', porQueImporta: 'Esto importa porque sí.'),
+        PasoLeccion(tipo: TipoPasoLeccion.explicacion, titulo: 'Sin porqué', cuerpo: 'Cuerpo sin porqué.'),
+      ],
+    );
+    const progresoId = 'progreso-profesor-intermedio-test';
+
+    setUp(() async {
+      final db = FakeFirebaseFirestore();
+      LeccionService.debugFirestoreOverride = db;
+      LeccionService.debugUidOverride = 'uid-test';
+      await db.collection('users').doc('uid-test').collection('progresoLecciones').doc(progresoId).set({
+        'leccionId': leccion.id,
+        'pasoActual': 0,
+        'estado': 'enCurso',
+      });
+    });
+
+    tearDown(() {
+      LeccionService.debugFirestoreOverride = null;
+      LeccionService.debugUidOverride = null;
+    });
+
+    testWidgets('un paso con porQueImporta lo muestra vía el profesor, sin recuadro aparte', (tester) async {
+      await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: progresoId)));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente')); // paso 0 -> 1 ("Con porqué")
+      await tester.pump();
+
+      expect(find.text('Esto importa porque sí.'), findsOneWidget);
+      // El recuadro teal "por qué importa" de antes usaba este icono --
+      // confirma que no quedan dos sitios mostrando el mismo texto.
+      expect(find.byIcon(Icons.lightbulb_outline), findsNothing);
+    });
+
+    testWidgets('un paso sin porQueImporta muestra un comentario de transición del profesor', (tester) async {
+      await tester.pumpWidget(_envolver(const LeccionScreen(leccion: leccion, progresoId: progresoId)));
+      await tester.pump();
+      await tester.tap(find.text('Siguiente')); // paso 0 -> 1
+      await tester.pump();
+      await tester.tap(find.text('Siguiente')); // paso 1 -> 2 ("Sin porqué")
+      await tester.pump();
+
+      expect(find.text(comentarioTransicion(leccion.id, 2)), findsOneWidget);
+    });
+  });
+
   group('LeccionService -- contrato de progreso (regresión, Firestore falso)', () {
     late AnalyticsSink sinkOriginal;
 

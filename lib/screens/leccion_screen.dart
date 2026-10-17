@@ -33,10 +33,13 @@ class _LeccionScreenState extends State<LeccionScreen> {
     return paso.opciones != null && _seleccionQuiz == null;
   }
 
-  /// Dónde y con qué mensaje aparece el profesor virtual -- selectivo, no
-  /// en cada paso: solo en la bienvenida, en la comprobación (antes y
-  /// después de responder) y en el cierre, para no saturar la pantalla.
-  ({PoseProfesor pose, String mensaje})? _contextoProfesor(PasoLeccion paso) {
+  /// El profesor virtual acompaña TODOS los pasos, no solo bienvenida/
+  /// comprobación/cierre -- para que la lección no se quede en puro texto
+  /// a mitad de camino. Cuando el paso ya tiene `porQueImporta` escrito,
+  /// el profesor dice exactamente ese texto (sustituye al recuadro suelto
+  /// que había antes); si no, un comentario breve de transición fijo, sin
+  /// inventar contenido educativo nuevo.
+  ({PoseProfesor pose, String mensaje}) _contextoProfesor(PasoLeccion paso) {
     if (paso.tipo == TipoPasoLeccion.comprobacion && paso.opciones != null) {
       if (_seleccionQuiz == null) {
         return (pose: PoseProfesor.saludo, mensaje: pistaComprobacion(widget.leccion.id));
@@ -52,8 +55,17 @@ class _LeccionScreenState extends State<LeccionScreen> {
     if (_paso == 0) {
       return (pose: PoseProfesor.saludo, mensaje: saludoLeccion(widget.leccion.titulo));
     }
-    return null;
+    if (paso.porQueImporta != null) {
+      return (pose: PoseProfesor.saludo, mensaje: paso.porQueImporta!);
+    }
+    return (pose: PoseProfesor.saludo, mensaje: comentarioTransicion(widget.leccion.id, _paso));
   }
+
+  /// true si el profesor va antes del cuerpo del paso (bienvenida, pista
+  /// de comprobación, cierre -- casos donde abre el paso) en vez de
+  /// después (comentario ligado a lo que se acaba de leer).
+  bool _profesorVaAntesDelCuerpo(PasoLeccion paso) =>
+      (paso.tipo == TipoPasoLeccion.comprobacion && paso.opciones != null) || paso.tipo == TipoPasoLeccion.resumen || _paso == 0;
 
   Future<void> _siguiente() async {
     setState(() => _avanzando = true);
@@ -114,6 +126,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
     final paso = widget.leccion.pasos[_paso];
     final progreso = (_paso + 1) / widget.leccion.pasos.length;
     final contextoProfesor = _contextoProfesor(paso);
+    final profesorAntes = _profesorVaAntesDelCuerpo(paso);
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.leccion.titulo, maxLines: 1, overflow: TextOverflow.ellipsis)),
@@ -139,7 +152,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(paso.titulo, style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22)),
-                if (contextoProfesor != null) ...[
+                if (profesorAntes) ...[
                   const SizedBox(height: LumioSpace.s3),
                   ProfesorLumio(pose: contextoProfesor.pose, mensaje: contextoProfesor.mensaje),
                 ],
@@ -158,17 +171,9 @@ class _LeccionScreenState extends State<LeccionScreen> {
                     seleccion: _seleccionQuiz,
                     onSeleccionar: (i) => setState(() => _seleccionQuiz = i),
                   ),
-                ] else if (paso.porQueImporta != null) ...[
+                ] else if (!profesorAntes) ...[
                   const SizedBox(height: LumioSpace.s4),
-                  Container(
-                    padding: const EdgeInsets.all(LumioSpace.s3),
-                    decoration: BoxDecoration(color: context.colors.brandTint, borderRadius: BorderRadius.circular(LumioRadius.sm)),
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Icon(Icons.lightbulb_outline, size: 18, color: context.colors.brand),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(paso.porQueImporta!, style: TextStyle(fontSize: 13, color: context.colors.ink))),
-                    ]),
-                  ),
+                  ProfesorLumio(pose: contextoProfesor.pose, mensaje: contextoProfesor.mensaje),
                 ],
               ],
             ),

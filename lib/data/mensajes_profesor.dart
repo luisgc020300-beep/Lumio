@@ -29,6 +29,13 @@ const _cierresLeccion = [
   '¡Así se hace! Un aparato menos que te resulte misterioso.',
 ];
 
+const _transiciones = [
+  'Sigamos con lo siguiente.',
+  'Vamos un paso más.',
+  'Ya casi lo tienes.',
+  'Bien, continuemos.',
+];
+
 String _rotar(List<String> opciones, String semilla) => opciones[semilla.hashCode.abs() % opciones.length];
 
 String saludoLeccion(String tituloLeccion) => '¡Vamos a por "$tituloLeccion"!';
@@ -40,5 +47,7 @@ String feedbackCorrecto(String leccionId) => _rotar(_feedbackCorrecto, '$leccion
 String feedbackIncorrecto(String leccionId) => _rotar(_feedbackIncorrecto, '$leccionId-fail');
 
 String cierreLeccion(String leccionId) => _rotar(_cierresLeccion, leccionId);
+
+String comentarioTransicion(String leccionId, int indicePaso) => _rotar(_transiciones, '$leccionId-paso-$indicePaso');
 
 const String saludoHome = 'Dime qué aparato de casa quieres entender hoy.';
