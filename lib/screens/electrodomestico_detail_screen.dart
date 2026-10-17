@@ -142,7 +142,21 @@ class _TabResumen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(LumioSpace.s4),
       children: [
-        if (e.fotoUrl != null) ClipRRect(borderRadius: BorderRadius.circular(LumioRadius.lg), child: CachedNetworkImage(imageUrl: e.fotoUrl!, height: 200, width: double.infinity, fit: BoxFit.cover)),
+        if (e.fotoUrl != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(LumioRadius.lg),
+            // BoxFit.contain (no .cover): una foto de móvil normal es más
+            // alta que ancha, y forzarla a una caja ancha y baja con
+            // .cover recortaba buena parte del electrodoméstico. Con
+            // .contain siempre se ve la foto completa, con el fondo de
+            // la app rellenando el hueco sobrante si lo hay.
+            child: Container(
+              height: 240,
+              width: double.infinity,
+              color: context.colors.surfaceMuted,
+              child: CachedNetworkImage(imageUrl: e.fotoUrl!, fit: BoxFit.contain),
+            ),
+          ),
         const SizedBox(height: LumioSpace.s4),
         Row(children: [
           Chip(

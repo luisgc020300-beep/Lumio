@@ -150,7 +150,11 @@ class _CamaraScreenState extends State<CamaraScreen> {
     return Stack(
       children: [
         if (_foto != null)
-          Positioned.fill(bottom: null, child: SizedBox(height: 280, width: double.infinity, child: Image.file(_foto!, fit: BoxFit.cover))),
+          // BoxFit.contain, no .cover: una foto de móvil (más alta que
+          // ancha) recortaba bastante al forzarla a esta caja panorámica.
+          // El fondo de esta pantalla ya es negro a propósito (overlay de
+          // cámara), así que el hueco sobrante se ve intencional.
+          Positioned.fill(bottom: null, child: SizedBox(height: 280, width: double.infinity, child: Image.file(_foto!, fit: BoxFit.contain))),
         Positioned.fill(
           top: 240,
           child: Container(
