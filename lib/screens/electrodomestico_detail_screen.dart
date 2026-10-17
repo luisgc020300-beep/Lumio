@@ -3,8 +3,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../data/catalogo_lecciones.dart';
+import '../data/conocimiento_electrodomestico.dart';
 import '../models/diagnostico.dart';
 import '../models/electrodomestico.dart';
+import '../models/leccion.dart';
 import '../services/diagnostico_service.dart';
 import '../services/electrodomestico_service.dart';
 import '../services/leccion_service.dart';
@@ -193,6 +195,8 @@ class _TabResumen extends StatelessWidget {
           ),
         ],
         const SizedBox(height: LumioSpace.s5),
+        _TarjetaConocimiento(e: e),
+        const SizedBox(height: LumioSpace.s5),
         Text('Garantía', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 6),
         Card(
@@ -209,6 +213,75 @@ class _TabResumen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Cuánto sabe el usuario sobre este aparato -- mide sobre todo
+/// conocimiento de la categoría (el progreso de lección es por leccionId,
+/// no por aparato físico, ver LeccionService.obtenerProgreso), reforzado
+/// por los problemas resueltos específicamente con ESTE electrodoméstico.
+/// Ver calcularPorcentajeConocimiento para los pesos.
+class _TarjetaConocimiento extends StatelessWidget {
+  const _TarjetaConocimiento({required this.e});
+  final Electrodomestico e;
+
+  @override
+  Widget build(BuildContext context) {
+    final leccionesCategoria = leccionesPorCategoria(e.categoria);
+    if (leccionesCategoria.isEmpty) return const SizedBox.shrink();
+    final idsLeccionesCategoria = leccionesCategoria.map((l) => l.id).toSet();
+
+    return StreamBuilder<List<ProgresoLeccion>>(
+      stream: LeccionService.streamProgreso(),
+      builder: (context, progresoSnapshot) {
+        final leccionesCompletadas = (progresoSnapshot.data ?? [])
+            .where((p) => p.estado == EstadoProgresoLeccion.completada && idsLeccionesCategoria.contains(p.leccionId))
+            .length;
+
+        return StreamBuilder<List<SesionDiagnostico>>(
+          stream: DiagnosticoService.streamSesiones(),
+          builder: (context, sesionesSnapshot) {
+            final problemasResueltos = (sesionesSnapshot.data ?? [])
+                .where((s) => s.electrodomesticoId == e.id && s.estado == EstadoDiagnostico.resuelto)
+                .length;
+
+            final porcentaje = calcularPorcentajeConocimiento(
+              leccionesCompletadas: leccionesCompletadas,
+              leccionesTotal: leccionesCategoria.length,
+              problemasResueltos: problemasResueltos,
+            );
+
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(LumioSpace.s4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text('Cuánto sabes sobre esto', style: Theme.of(context).textTheme.titleMedium)),
+                        Text('$porcentaje%', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: context.colors.brand)),
+                      ],
+                    ),
+                    const SizedBox(height: LumioSpace.s2),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(LumioRadius.sm),
+                      child: LinearProgressIndicator(value: porcentaje / 100, minHeight: 6),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$leccionesCompletadas de ${leccionesCategoria.length} lecciones'
+                      '${problemasResueltos > 0 ? ' · $problemasResueltos problema${problemasResueltos == 1 ? '' : 's'} resuelto${problemasResueltos == 1 ? '' : 's'}' : ''}',
+                      style: TextStyle(fontSize: 13, color: context.colors.inkMuted),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
