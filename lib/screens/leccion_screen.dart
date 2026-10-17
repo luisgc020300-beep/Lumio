@@ -419,9 +419,10 @@ Future<void> abrirLeccion(BuildContext context, Leccion leccion) async {
 /// que mostrar; el fallback con icono es solo para que una lección
 /// futura sin ilustración no rompa el diseño.
 class TarjetaLeccionVisual extends StatelessWidget {
-  const TarjetaLeccionVisual({required this.leccion, this.width, super.key});
+  const TarjetaLeccionVisual({required this.leccion, this.width, this.alturaIlustracion = 120, super.key});
   final Leccion leccion;
   final double? width;
+  final double alturaIlustracion;
 
   @override
   Widget build(BuildContext context) {
@@ -438,10 +439,18 @@ class TarjetaLeccionVisual extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (asset != null)
-                ExcludeSemantics(child: Image.asset(asset, height: 120, width: double.infinity, fit: BoxFit.cover))
+                // BoxFit.contain (no .cover): las ilustraciones son 4:3 y la
+                // cabecera es mucho más ancha que alta -- con .cover se
+                // recortaba la mitad de la imagen por arriba y por abajo.
+                Container(
+                  height: alturaIlustracion,
+                  width: double.infinity,
+                  color: context.colors.surfaceMuted,
+                  child: ExcludeSemantics(child: Image.asset(asset, fit: BoxFit.contain)),
+                )
               else
                 Container(
-                  height: 120,
+                  height: alturaIlustracion,
                   width: double.infinity,
                   color: context.colors.surfaceMuted,
                   alignment: Alignment.center,

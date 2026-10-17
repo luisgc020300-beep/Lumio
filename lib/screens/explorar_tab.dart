@@ -46,80 +46,78 @@ class _ExplorarTabState extends State<ExplorarTab> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Explorar')),
-      body: Padding(
+      // Un único scrollable para toda la pantalla -- incluida la rejilla de
+      // categorías -- a propósito: así al bajar la rejilla se va con el
+      // resto y las lecciones se quedan con toda la pantalla, en vez de
+      // quedarse fija ocupando sitio permanentemente.
+      body: ListView(
         padding: const EdgeInsets.all(LumioSpace.s4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _controladorBusqueda,
-              decoration: const InputDecoration(hintText: 'Buscar una lección...', prefixIcon: Icon(Icons.search)),
-              onChanged: (v) => setState(() => _busqueda = v),
+        children: [
+          TextField(
+            controller: _controladorBusqueda,
+            decoration: const InputDecoration(hintText: 'Buscar una lección...', prefixIcon: Icon(Icons.search)),
+            onChanged: (v) => setState(() => _busqueda = v),
+          ),
+          const SizedBox(height: LumioSpace.s4),
+          if (_categoria == null && _busqueda.isEmpty) ...[
+            Text('¿Qué quieres aprender hoy?', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: LumioSpace.s3),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: LumioSpace.s3,
+              crossAxisSpacing: LumioSpace.s3,
+              childAspectRatio: 2.4,
+              children: CategoriaElectrodomestico.values
+                  .where((c) => c != CategoriaElectrodomestico.otro)
+                  .map((c) => _TarjetaCategoria(categoria: c, onTap: () => setState(() => _categoria = c)))
+                  .toList(),
             ),
             const SizedBox(height: LumioSpace.s4),
-            if (_categoria == null && _busqueda.isEmpty) ...[
-              Text('¿Qué quieres aprender hoy?', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: LumioSpace.s3),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: LumioSpace.s3,
-                crossAxisSpacing: LumioSpace.s3,
-                childAspectRatio: 2.4,
-                children: CategoriaElectrodomestico.values
-                    .where((c) => c != CategoriaElectrodomestico.otro)
-                    .map((c) => _TarjetaCategoria(categoria: c, onTap: () => setState(() => _categoria = c)))
-                    .toList(),
-              ),
-              const SizedBox(height: LumioSpace.s4),
-            ] else ...[
-              Row(
-                children: [
-                  if (_categoria != null)
-                    InputChip(
-                      label: Text(_categoria!.etiqueta),
-                      onDeleted: () => setState(() => _categoria = null),
-                      avatar: Icon(iconoCategoria(_categoria!.icono), size: 16, color: colorCategoria(context, _categoria!)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: LumioSpace.s3),
-            ],
-            Expanded(
-              child: lecciones.isEmpty
-                  ? EmptyState(
-                      icon: Icons.menu_book_outlined,
-                      title: 'Sin resultados',
-                      description: _busqueda.isEmpty
-                          ? 'Prueba a cambiar la categoría.'
-                          : 'Todavía no tenemos una lección sobre "$_busqueda". Prueba con alguna de estas categorías:',
-                      action: _busqueda.isEmpty
-                          ? null
-                          : Wrap(
-                              spacing: LumioSpace.s2,
-                              runSpacing: LumioSpace.s2,
-                              alignment: WrapAlignment.center,
-                              children: CategoriaElectrodomestico.values
-                                  .where((c) => c != CategoriaElectrodomestico.otro)
-                                  .map((c) => ActionChip(
-                                        avatar: Icon(iconoCategoria(c.icono), size: 16, color: colorCategoria(context, c)),
-                                        label: Text(c.etiqueta),
-                                        onPressed: () => _elegirCategoriaDesdeSugerencia(c),
-                                      ))
-                                  .toList(),
-                            ),
-                    )
-                  : ListView.builder(
-                      itemCount: lecciones.length,
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: LumioSpace.s3),
-                        child: TarjetaLeccionVisual(leccion: lecciones[i]),
-                      ),
-                    ),
+          ] else ...[
+            Row(
+              children: [
+                if (_categoria != null)
+                  InputChip(
+                    label: Text(_categoria!.etiqueta),
+                    onDeleted: () => setState(() => _categoria = null),
+                    avatar: Icon(iconoCategoria(_categoria!.icono), size: 16, color: colorCategoria(context, _categoria!)),
+                  ),
+              ],
             ),
+            const SizedBox(height: LumioSpace.s3),
           ],
-        ),
+          if (lecciones.isEmpty)
+            EmptyState(
+              icon: Icons.menu_book_outlined,
+              title: 'Sin resultados',
+              description: _busqueda.isEmpty
+                  ? 'Prueba a cambiar la categoría.'
+                  : 'Todavía no tenemos una lección sobre "$_busqueda". Prueba con alguna de estas categorías:',
+              action: _busqueda.isEmpty
+                  ? null
+                  : Wrap(
+                      spacing: LumioSpace.s2,
+                      runSpacing: LumioSpace.s2,
+                      alignment: WrapAlignment.center,
+                      children: CategoriaElectrodomestico.values
+                          .where((c) => c != CategoriaElectrodomestico.otro)
+                          .map((c) => ActionChip(
+                                avatar: Icon(iconoCategoria(c.icono), size: 16, color: colorCategoria(context, c)),
+                                label: Text(c.etiqueta),
+                                onPressed: () => _elegirCategoriaDesdeSugerencia(c),
+                              ))
+                          .toList(),
+                    ),
+            )
+          else
+            for (final l in lecciones)
+              Padding(
+                padding: const EdgeInsets.only(bottom: LumioSpace.s3),
+                child: TarjetaLeccionVisual(leccion: l, alturaIlustracion: 190),
+              ),
+        ],
       ),
     );
   }
