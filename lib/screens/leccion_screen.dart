@@ -348,24 +348,62 @@ Future<void> abrirLeccion(BuildContext context, Leccion leccion) async {
   }
 }
 
-/// Miniatura para las listas de lecciones (Explorar, Inicio) -- la
-/// primera ilustración de catálogo de la lección si tiene alguna, o el
-/// icono genérico de siempre si todavía no tiene ninguna.
-class MiniaturaLeccion extends StatelessWidget {
-  const MiniaturaLeccion({required this.leccion, this.size = 44, super.key});
+/// Tarjeta de lección con la ilustración como cabecera -- usada en los
+/// resultados de Explorar y en el carrusel "Para empezar" de Inicio.
+/// Con las 9 lecciones del catálogo ya ilustradas (ver
+/// lib/data/catalogo_lecciones.dart) esto siempre tiene una imagen real
+/// que mostrar; el fallback con icono es solo para que una lección
+/// futura sin ilustración no rompa el diseño.
+class TarjetaLeccionVisual extends StatelessWidget {
+  const TarjetaLeccionVisual({required this.leccion, this.width, super.key});
   final Leccion leccion;
-  final double size;
+  final double? width;
 
   @override
   Widget build(BuildContext context) {
     final asset = leccion.primeraIlustracion;
-    if (asset == null) {
-      return Icon(Icons.auto_stories_outlined, color: context.colors.brand);
-    }
-    return ExcludeSemantics(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(LumioRadius.xs),
-        child: Image.asset(asset, width: size, height: size, fit: BoxFit.cover),
+    return SizedBox(
+      width: width,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: EdgeInsets.zero,
+        child: InkWell(
+          onTap: () => abrirLeccion(context, leccion),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (asset != null)
+                ExcludeSemantics(child: Image.asset(asset, height: 120, width: double.infinity, fit: BoxFit.cover))
+              else
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  color: context.colors.surfaceMuted,
+                  alignment: Alignment.center,
+                  child: Icon(Icons.auto_stories_outlined, color: context.colors.brand, size: 32),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(LumioSpace.s3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      leccion.categoria.etiqueta,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: context.colors.brand),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(leccion.titulo, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text(leccion.objetivo, style: TextStyle(fontSize: 12, color: context.colors.inkMuted), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

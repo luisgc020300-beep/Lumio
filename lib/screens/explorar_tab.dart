@@ -112,19 +112,10 @@ class _ExplorarTabState extends State<ExplorarTab> {
                     )
                   : ListView.builder(
                       itemCount: lecciones.length,
-                      itemBuilder: (context, i) {
-                        final l = lecciones[i];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading: MiniaturaLeccion(leccion: l),
-                            title: Text(l.titulo),
-                            subtitle: Text(l.objetivo, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => abrirLeccion(context, l),
-                          ),
-                        );
-                      },
+                      itemBuilder: (context, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: LumioSpace.s3),
+                        child: TarjetaLeccionVisual(leccion: lecciones[i]),
+                      ),
                     ),
             ),
           ],

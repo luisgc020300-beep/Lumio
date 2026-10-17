@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../data/catalogo_lecciones.dart';
 import '../data/mensajes_profesor.dart';
 import '../models/electrodomestico.dart';
-import '../models/leccion.dart';
 import '../services/analytics_service.dart';
 import '../services/electrodomestico_service.dart';
 import '../theme/categoria_estilos.dart';
@@ -41,21 +40,28 @@ class HomeTab extends StatelessWidget {
         children: [
           const ProfesorLumio(pose: PoseProfesor.saludo, mensaje: saludoHome),
           const SizedBox(height: LumioSpace.s4),
-          _TarjetaPrincipal(
-            icon: Icons.photo_camera_outlined,
-            titulo: 'Enséñame un aparato',
-            subtitulo: 'Haz una foto y descubre cómo funciona.',
-            botonPrimario: 'Usar cámara',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CamaraScreen())),
-          ),
-          const SizedBox(height: LumioSpace.s4),
-          _TarjetaPrincipal(
-            icon: Icons.build_outlined,
-            titulo: 'Tengo un problema',
-            subtitulo: 'Cuéntame qué ocurre y lo investigamos juntos.',
-            botonPrimario: 'Empezar',
-            tono: context.colors.lavanda,
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DiagnosticoScreen())),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _TarjetaPrincipal(
+                  icon: Icons.photo_camera_outlined,
+                  titulo: 'Enséñame un aparato',
+                  subtitulo: 'Haz una foto y descubre cómo funciona.',
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CamaraScreen())),
+                ),
+              ),
+              const SizedBox(width: LumioSpace.s3),
+              Expanded(
+                child: _TarjetaPrincipal(
+                  icon: Icons.build_outlined,
+                  titulo: 'Tengo un problema',
+                  subtitulo: 'Cuéntame qué ocurre.',
+                  tono: context.colors.lavanda,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DiagnosticoScreen())),
+                ),
+              ),
+            ],
           ),
           const _BannerGarantias(),
           const SizedBox(height: LumioSpace.s6),
@@ -70,7 +76,7 @@ class HomeTab extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
-              final items = (snapshot.data ?? []).take(3).toList();
+              final items = (snapshot.data ?? []).take(6).toList();
               if (items.isEmpty) {
                 return const EmptyState(
                   icon: Icons.kitchen_outlined,
@@ -78,25 +84,29 @@ class HomeTab extends StatelessWidget {
                   description: 'Haz una foto con "Enséñame un aparato" para empezar.',
                 );
               }
-              return Column(
-                children: items.map((e) {
-                  final acento = colorCategoria(context, e.categoria);
-                  return Card(
-                    child: ListTile(
-                      leading: CircleAvatar(backgroundColor: acento.withValues(alpha: 0.15), child: Icon(iconoCategoria(e.categoria.icono), color: acento)),
-                      title: Text(e.nombre),
-                      subtitle: Text(e.modeloVerificado ? '${e.fabricante ?? ''} ${e.modelo ?? ''}'.trim() : e.categoria.etiqueta),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ElectrodomesticoDetailScreen(id: e.id))),
-                    ),
-                  );
-                }).toList(),
+              return SizedBox(
+                height: 104,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: LumioSpace.s2),
+                  itemBuilder: (context, i) => _TarjetaElectrodomesticoCompacta(electrodomestico: items[i]),
+                ),
               );
             },
           ),
           const SizedBox(height: LumioSpace.s6),
           Text('Para empezar', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: LumioSpace.s2),
-          ...catalogoLecciones.take(2).map((l) => _TarjetaLeccionRecomendada(leccion: l)),
+          SizedBox(
+            height: 220,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: catalogoLecciones.take(4).length,
+              separatorBuilder: (_, _) => const SizedBox(width: LumioSpace.s3),
+              itemBuilder: (context, i) => TarjetaLeccionVisual(leccion: catalogoLecciones[i], width: 200),
+            ),
+          ),
         ],
       ),
     );
@@ -171,59 +181,82 @@ class _BannerGarantiasState extends State<_BannerGarantias> {
   }
 }
 
+/// Tarjeta de acción compacta -- toda la tarjeta es el área táctil, sin
+/// botón propio dentro (antes tenía uno, pero a ancho completo); mismo
+/// criterio visual que _TarjetaCategoria de Explorar.
 class _TarjetaPrincipal extends StatelessWidget {
-  const _TarjetaPrincipal({required this.icon, required this.titulo, required this.subtitulo, required this.botonPrimario, required this.onTap, this.tono});
+  const _TarjetaPrincipal({required this.icon, required this.titulo, required this.subtitulo, required this.onTap, this.tono});
   final IconData icon;
   final String titulo;
   final String subtitulo;
-  final String botonPrimario;
   final VoidCallback onTap;
   final Color? tono;
 
   @override
   Widget build(BuildContext context) {
     final color = tono ?? context.colors.brand;
-    return Container(
-      padding: const EdgeInsets.all(LumioSpace.s5),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
+    return Material(
+      color: context.colors.surface,
+      borderRadius: BorderRadius.circular(LumioRadius.lg),
+      child: InkWell(
         borderRadius: BorderRadius.circular(LumioRadius.lg),
-        boxShadow: [BoxShadow(color: context.colors.ink.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(LumioRadius.md)),
-            child: Icon(icon, color: color, size: 24),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(LumioSpace.s4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(LumioRadius.lg),
+            boxShadow: [BoxShadow(color: context.colors.ink.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))],
           ),
-          const SizedBox(height: LumioSpace.s3),
-          Text(titulo, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 17)),
-          const SizedBox(height: LumioSpace.s1),
-          Text(subtitulo, style: TextStyle(color: context.colors.inkMuted, fontSize: 13)),
-          const SizedBox(height: LumioSpace.s4),
-          SizedBox(width: double.infinity, child: FilledButton(onPressed: onTap, child: Text(botonPrimario))),
-        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(LumioRadius.md)),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(height: LumioSpace.s3),
+              Text(titulo, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600), maxLines: 2),
+              const SizedBox(height: 2),
+              Text(subtitulo, style: TextStyle(color: context.colors.inkMuted, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _TarjetaLeccionRecomendada extends StatelessWidget {
-  const _TarjetaLeccionRecomendada({required this.leccion});
-  final Leccion leccion;
+/// Tarjeta compacta para el carrusel horizontal de "Tus electrodomésticos".
+class _TarjetaElectrodomesticoCompacta extends StatelessWidget {
+  const _TarjetaElectrodomesticoCompacta({required this.electrodomestico});
+  final Electrodomestico electrodomestico;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: MiniaturaLeccion(leccion: leccion),
-        title: Text(leccion.titulo),
-        subtitle: Text(leccion.categoria.etiqueta),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => abrirLeccion(context, leccion),
+    final acento = colorCategoria(context, electrodomestico.categoria);
+    return SizedBox(
+      width: 92,
+      child: Material(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(LumioRadius.md),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(LumioRadius.md),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ElectrodomesticoDetailScreen(id: electrodomestico.id))),
+          child: Padding(
+            padding: const EdgeInsets.all(LumioSpace.s2),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(backgroundColor: acento.withValues(alpha: 0.15), child: Icon(iconoCategoria(electrodomestico.categoria.icono), color: acento)),
+                const SizedBox(height: LumioSpace.s1),
+                Text(electrodomestico.nombre, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

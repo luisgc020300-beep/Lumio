@@ -84,14 +84,16 @@ void main() {
     });
   });
 
-  group('MiniaturaLeccion', () {
-    testWidgets('muestra la ilustración cuando la lección tiene una', (tester) async {
+  group('TarjetaLeccionVisual', () {
+    testWidgets('muestra la ilustración, el título y el objetivo cuando la lección tiene imagen', (tester) async {
       final leccion = catalogoLecciones.firstWhere((l) => l.id == 'lavadora_entender');
-      await tester.pumpWidget(_envolver(MiniaturaLeccion(leccion: leccion)));
+      await tester.pumpWidget(_envolver(TarjetaLeccionVisual(leccion: leccion)));
       await tester.pump();
 
       expect(find.byType(Image), findsOneWidget);
       expect(find.byIcon(Icons.auto_stories_outlined), findsNothing);
+      expect(find.text(leccion.titulo), findsOneWidget);
+      expect(find.text(leccion.objetivo), findsOneWidget);
     });
 
     testWidgets('muestra el icono genérico cuando la lección no tiene ilustración', (tester) async {
@@ -103,7 +105,7 @@ void main() {
         nivel: 'principiante',
         pasos: [PasoLeccion(tipo: TipoPasoLeccion.explicacion, titulo: 'Único paso', cuerpo: 'Cuerpo.')],
       );
-      await tester.pumpWidget(_envolver(const MiniaturaLeccion(leccion: leccion)));
+      await tester.pumpWidget(_envolver(const TarjetaLeccionVisual(leccion: leccion)));
       await tester.pump();
 
       expect(find.byType(Image), findsNothing);
