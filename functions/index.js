@@ -104,7 +104,7 @@ const IDENTIFY_TOOL = {
       category: { type: 'string', enum: CATEGORIAS },
       manufacturer: { type: 'string', description: 'Solo si es legible con certeza razonable (p. ej. en una etiqueta). Omite si no.' },
       model: { type: 'string', description: 'Solo si es legible con certeza razonable. Omite si no.' },
-      confidence: { type: 'number', minimum: 0, maximum: 1, description: 'Confianza en la identificación de fabricante/modelo, no solo de la categoría.' },
+      confidence: { type: 'number', description: 'Confianza en la identificación de fabricante/modelo (no solo de la categoría), como número entre 0 y 1.' },
       visible_controls: { type: 'array', items: { type: 'string' }, description: 'Controles/mandos visibles en la foto, en español sencillo.' },
       uncertainties: { type: 'array', items: { type: 'string' }, description: 'Qué no se puede determinar con esta foto.' },
       summary: { type: 'string', description: '1-2 frases en español describiendo lo identificado.' },
