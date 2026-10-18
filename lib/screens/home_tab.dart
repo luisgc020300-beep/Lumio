@@ -40,28 +40,21 @@ class HomeTab extends StatelessWidget {
         children: [
           const ProfesorLumio(pose: PoseProfesor.saludo, mensaje: saludoHome),
           const SizedBox(height: LumioSpace.s4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _TarjetaPrincipal(
-                  icon: Icons.photo_camera_outlined,
-                  titulo: 'Enséñame un aparato',
-                  subtitulo: 'Haz una foto y descubre cómo funciona.',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CamaraScreen())),
-                ),
-              ),
-              const SizedBox(width: LumioSpace.s3),
-              Expanded(
-                child: _TarjetaPrincipal(
-                  icon: Icons.build_outlined,
-                  titulo: 'Tengo un problema',
-                  subtitulo: 'Cuéntame qué ocurre.',
-                  tono: context.colors.lavanda,
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DiagnosticoScreen())),
-                ),
-              ),
-            ],
+          _TarjetaPrincipal(
+            icon: Icons.photo_camera_outlined,
+            titulo: 'Enséñame un aparato',
+            subtitulo: 'Haz una foto y descubre cómo funciona.',
+            botonPrimario: 'Usar cámara',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CamaraScreen())),
+          ),
+          const SizedBox(height: LumioSpace.s4),
+          _TarjetaPrincipal(
+            icon: Icons.build_outlined,
+            titulo: 'Tengo un problema',
+            subtitulo: 'Cuéntame qué ocurre y lo investigamos juntos.',
+            botonPrimario: 'Empezar',
+            tono: context.colors.lavanda,
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DiagnosticoScreen())),
           ),
           const _BannerGarantias(),
           const SizedBox(height: LumioSpace.s6),
@@ -181,49 +174,45 @@ class _BannerGarantiasState extends State<_BannerGarantias> {
   }
 }
 
-/// Tarjeta de acción compacta -- toda la tarjeta es el área táctil, sin
-/// botón propio dentro (antes tenía uno, pero a ancho completo); mismo
-/// criterio visual que _TarjetaCategoria de Explorar.
+/// Tarjeta de acción con botón explícito a ancho completo -- vuelta al
+/// diseño anterior a las tarjetas compactas lado a lado: con dos acciones
+/// nada más, el botón visible rinde mejor que fiarlo todo al área táctil
+/// de la tarjeta entera.
 class _TarjetaPrincipal extends StatelessWidget {
-  const _TarjetaPrincipal({required this.icon, required this.titulo, required this.subtitulo, required this.onTap, this.tono});
+  const _TarjetaPrincipal({required this.icon, required this.titulo, required this.subtitulo, required this.botonPrimario, required this.onTap, this.tono});
   final IconData icon;
   final String titulo;
   final String subtitulo;
+  final String botonPrimario;
   final VoidCallback onTap;
   final Color? tono;
 
   @override
   Widget build(BuildContext context) {
     final color = tono ?? context.colors.brand;
-    return Material(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(LumioRadius.lg),
-      child: InkWell(
+    return Container(
+      padding: const EdgeInsets.all(LumioSpace.s5),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(LumioRadius.lg),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(LumioSpace.s4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(LumioRadius.lg),
-            boxShadow: [BoxShadow(color: context.colors.ink.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: [BoxShadow(color: context.colors.ink.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(LumioRadius.md)),
+            child: Icon(icon, color: color, size: 24),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(LumioRadius.md)),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              const SizedBox(height: LumioSpace.s3),
-              Text(titulo, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600), maxLines: 2),
-              const SizedBox(height: 2),
-              Text(subtitulo, style: TextStyle(color: context.colors.inkMuted, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
-            ],
-          ),
-        ),
+          const SizedBox(height: LumioSpace.s3),
+          Text(titulo, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 17)),
+          const SizedBox(height: LumioSpace.s1),
+          Text(subtitulo, style: TextStyle(color: context.colors.inkMuted, fontSize: 13)),
+          const SizedBox(height: LumioSpace.s4),
+          SizedBox(width: double.infinity, child: FilledButton(onPressed: onTap, child: Text(botonPrimario))),
+        ],
       ),
     );
   }
@@ -250,7 +239,11 @@ class _TarjetaElectrodomesticoCompacta extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(backgroundColor: acento.withValues(alpha: 0.15), child: Icon(iconoCategoria(electrodomestico.categoria.icono), color: acento)),
+                CircleAvatar(
+                  backgroundColor: acento.withValues(alpha: 0.15),
+                  backgroundImage: electrodomestico.fotoUrl != null ? NetworkImage(electrodomestico.fotoUrl!) : null,
+                  child: electrodomestico.fotoUrl == null ? Icon(iconoCategoria(electrodomestico.categoria.icono), color: acento) : null,
+                ),
                 const SizedBox(height: LumioSpace.s1),
                 Text(electrodomestico.nombre, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
               ],

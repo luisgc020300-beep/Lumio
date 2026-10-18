@@ -189,6 +189,22 @@ exports.identificarElectrodomestico = onCall({ region: REGION, secrets: [_anthro
 // afirma un diagnóstico sin evidencia del usuario.
 // =============================================================================
 
+// Mismo mapeo valor->etiqueta que CategoriaElectrodomestico.etiqueta en
+// lib/models/electrodomestico.dart -- duplicado deliberadamente porque el
+// enum vive en Dart y esto es Node; si se añade una categoría nueva hay que
+// tocar los dos sitios.
+const CATEGORIA_ETIQUETAS = {
+  lavadora_secadora: 'lavadora o secadora',
+  lavavajillas: 'lavavajillas',
+  frigorifico_congelador: 'frigorífico o congelador',
+  horno_placa: 'horno o placa',
+  aire_acondicionado: 'aire acondicionado',
+  pequeno_electrodomestico: 'pequeño electrodoméstico',
+  radiador: 'radiador',
+  grifo: 'grifo',
+  otro: 'otro',
+};
+
 const TROUBLESHOOT_TOOL = {
   name: 'responder_diagnostico',
   description: 'Registra el siguiente turno del asistente de diagnóstico.',
@@ -235,6 +251,18 @@ Reglas estrictas:
 - Responde siempre en español, de forma breve y concreta.
 Responde SIEMPRE llamando a la herramienta responder_diagnostico -- nunca con texto libre.`;
 
+// Datos del electrodoméstico concreto (categoría/fabricante/modelo, ya
+// identificados por classifyDocument al "Enséñame un aparato") -- sin esto
+// el diagnóstico trataba cualquier aparato como genérico aunque el usuario
+// hubiera entrado desde la ficha de SU lavadora en concreto. Bajo el propio
+// namespace del usuario autenticado, igual que obtenerHistorialPrevio.
+async function obtenerElectrodomestico(uid, electrodomesticoId) {
+  if (typeof electrodomesticoId !== 'string' || !electrodomesticoId) return null;
+  const doc = await admin.firestore().collection('users').doc(uid).collection('electrodomesticos').doc(electrodomesticoId).get();
+  if (!doc.exists) return null;
+  return doc.data();
+}
+
 // El diferenciador frente a abrir una conversación nueva en un chat de IA
 // genérico: Lumio recuerda lo que ya pasó con ESTE electrodoméstico
 // concreto. Se consulta bajo el propio namespace del usuario autenticado
@@ -269,15 +297,9 @@ async function registrarAprendizajeAgregado(uid, electrodomesticoId, raw) {
   if (!raw.symptom_summary) return;
   if (raw.status !== 'resuelto' && raw.status !== 'escaladoProfesional') return;
   try {
-    let categoria = null;
-    let fabricante = null;
-    if (typeof electrodomesticoId === 'string' && electrodomesticoId) {
-      const doc = await admin.firestore().collection('users').doc(uid).collection('electrodomesticos').doc(electrodomesticoId).get();
-      if (doc.exists) {
-        categoria = doc.data().categoria || null;
-        fabricante = doc.data().fabricante || null;
-      }
-    }
+    const electrodomestico = await obtenerElectrodomestico(uid, electrodomesticoId);
+    const categoria = electrodomestico?.categoria || null;
+    const fabricante = electrodomestico?.fabricante || null;
     await admin.firestore().collection('aprendizajeAgregado').add({
       categoria,
       fabricante,
@@ -326,10 +348,23 @@ exports.investigarProblema = onCall({ region: REGION, secrets: [_anthropicKey] }
 
   await comprobarYRegistrarUso(request.auth.uid, 'mensajesDiagnostico', LIMITE_MENSAJES_DIAGNOSTICO_DIARIO);
 
-  const historialPrevio = await obtenerHistorialPrevio(request.auth.uid, electrodomesticoId);
-  const systemPrompt = historialPrevio.length
-    ? `${TROUBLESHOOT_SYSTEM_PROMPT}\n\nHistorial conocido de este electrodoméstico (solo como referencia -- no asumas que la causa actual es la misma sin evidencia nueva del usuario en esta conversación):\n${historialPrevio.join('\n')}`
-    : TROUBLESHOOT_SYSTEM_PROMPT;
+  const [electrodomestico, historialPrevio] = await Promise.all([
+    obtenerElectrodomestico(request.auth.uid, electrodomesticoId),
+    obtenerHistorialPrevio(request.auth.uid, electrodomesticoId),
+  ]);
+
+  let systemPrompt = TROUBLESHOOT_SYSTEM_PROMPT;
+  if (electrodomestico) {
+    const datos = [
+      `categoría: ${CATEGORIA_ETIQUETAS[electrodomestico.categoria] || electrodomestico.categoria || 'desconocida'}`,
+      electrodomestico.fabricante ? `fabricante: ${electrodomestico.fabricante}` : null,
+      electrodomestico.modelo ? `modelo: ${electrodomestico.modelo}` : null,
+    ].filter(Boolean);
+    systemPrompt += `\n\nEl usuario ha entrado desde la ficha de un electrodoméstico concreto ya identificado (${datos.join(', ')}). Ten esto en cuenta para hacer preguntas y proponer causas relevantes a ESTE tipo de aparato -- no lo trates como un electrodoméstico genérico.`;
+  }
+  if (historialPrevio.length) {
+    systemPrompt += `\n\nHistorial conocido de este electrodoméstico (solo como referencia -- no asumas que la causa actual es la misma sin evidencia nueva del usuario en esta conversación):\n${historialPrevio.join('\n')}`;
+  }
 
   const raw = await llamarClaudeConHerramienta({
     apiKey,
