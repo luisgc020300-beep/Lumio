@@ -46,16 +46,6 @@ void main() {
     }
   });
 
-  test('todo modelo3dAsset referenciado existe de verdad en disco', () {
-    for (final l in catalogoLecciones) {
-      for (final p in l.pasos) {
-        if (p.modelo3dAsset == null) continue;
-        final existe = File(p.modelo3dAsset!).existsSync();
-        expect(existe, isTrue, reason: '"${l.id}": modelo 3D roto -- ${p.modelo3dAsset} no existe');
-      }
-    }
-  });
-
   test('radiador_entender y grifo_entender están en el catálogo y se pueden abrir', () {
     final radiador = leccionPorId('radiador_entender');
     final grifo = leccionPorId('grifo_entender');

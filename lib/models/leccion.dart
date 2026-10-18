@@ -24,7 +24,6 @@ class PasoLeccion {
     required this.titulo,
     required this.cuerpo,
     this.imagenAsset,
-    this.modelo3dAsset,
     this.porQueImporta,
     this.preguntas,
   });
@@ -35,11 +34,6 @@ class PasoLeccion {
   /// Asset local empaquetado con la app (contenido curado, no generado) --
   /// nunca una foto real del aparato del usuario en lecciones de catálogo.
   final String? imagenAsset;
-  /// Modelo 3D (.glb) interactivo -- cuando está presente, la pantalla de
-  /// lección lo muestra en vez de [imagenAsset] para este paso (sigue
-  /// contando como la ilustración 2D de catálogo a efectos de
-  /// [Leccion.primeraIlustracion], que no sabe de modelos 3D).
-  final String? modelo3dAsset;
   /// "Por qué importa" -- el principio central del producto: explicar el
   /// motivo, no solo el paso.
   final String? porQueImporta;

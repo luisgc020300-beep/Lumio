@@ -1,6 +1,5 @@
 // lib/screens/leccion_screen.dart
 import 'package:flutter/material.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../data/mensajes_profesor.dart';
 import '../models/leccion.dart';
@@ -150,10 +149,7 @@ class _LeccionScreenState extends State<LeccionScreen> {
                   const SizedBox(height: LumioSpace.s3),
                   ProfesorLumio(pose: contextoProfesor.pose, mensaje: contextoProfesor.mensaje),
                 ],
-                if (paso.modelo3dAsset != null) ...[
-                  const SizedBox(height: LumioSpace.s4),
-                  _Ilustracion3DPaso(asset: paso.modelo3dAsset!, descripcion: paso.titulo),
-                ] else if (paso.imagenAsset != null) ...[
+                if (paso.imagenAsset != null) ...[
                   const SizedBox(height: LumioSpace.s4),
                   _IlustracionPaso(asset: paso.imagenAsset!, descripcion: paso.titulo),
                 ],
@@ -217,39 +213,6 @@ class _IlustracionPaso extends StatelessWidget {
           padding: const EdgeInsets.all(LumioSpace.s2),
           decoration: BoxDecoration(color: context.colors.surfaceMuted, borderRadius: BorderRadius.circular(LumioRadius.md)),
           child: Image.asset(asset, fit: BoxFit.contain),
-        ),
-      ),
-    );
-  }
-}
-
-/// Modelo 3D interactivo de catálogo (asset local .glb, prototipo --
-/// solo la lavadora por ahora). Arrastrar para rotar y auto-rotación
-/// vienen de serie con ModelViewer, no hay gestos que programar a mano.
-/// Mismo criterio visual que [_IlustracionPaso] (fondo surfaceMuted,
-/// mismo radio), para que no desentone al lado del resto de pasos.
-class _Ilustracion3DPaso extends StatelessWidget {
-  const _Ilustracion3DPaso({required this.asset, required this.descripcion});
-  final String asset;
-  final String descripcion;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Modelo 3D interactivo: $descripcion. Arrastra para rotarlo.',
-      child: Container(
-        width: double.infinity,
-        height: 240,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(color: context.colors.surfaceMuted, borderRadius: BorderRadius.circular(LumioRadius.md)),
-        child: ModelViewer(
-          src: asset,
-          alt: descripcion,
-          autoRotate: true,
-          autoRotateDelay: 1500,
-          cameraControls: true,
-          disableZoom: true,
-          backgroundColor: Colors.transparent,
         ),
       ),
     );

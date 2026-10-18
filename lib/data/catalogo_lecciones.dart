@@ -27,10 +27,6 @@ final List<Leccion> catalogoLecciones = [
         cuerpo: 'El cajetín de detergente añade el jabón y suavizante en el momento adecuado del ciclo. El tambor es donde va la ropa. El filtro atrapa pelusa y objetos pequeños, y hay que limpiarlo de vez en cuando.',
         porQueImporta: 'Saber dónde está cada parte te ayuda a usar la lavadora correctamente y a solucionar problemas simples sin ayuda.',
         imagenAsset: 'assets/lecciones/lavadora_entender/partes.webp',
-        // Prototipo: modelo 3D interactivo (arrastrar para rotar) en vez de
-        // la ilustración plana para este paso -- primera lección piloto
-        // antes de decidir si se extiende al resto del catálogo.
-        modelo3dAsset: 'assets/lecciones/lavadora_entender/lavadora.glb',
       ),
       PasoLeccion(
         tipo: TipoPasoLeccion.explicacion,
